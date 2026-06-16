@@ -17,7 +17,7 @@ export default async function Home() {
       <footer className="app">
         <div>We don&apos;t tell you what to think — we show you where the country splits, and why.</div>
         <div style={{ marginTop: 8 }}>
-          <a href="/about">Methodology</a>
+          <a href="/about">Methodology</a> · <a href="/privacy">Privacy</a>
         </div>
       </footer>
     </>

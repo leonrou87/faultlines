@@ -1,6 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { Story, Vote } from "@/lib/stories";
+import AdSlot from "@/components/AdSlot";
+
+// In-feed ad slot ids (set once your AdSense units exist). Falls back to a placeholder.
+const AD_INFEED = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INFEED;
+const AD_EVERY = 5; // show an ad after every N stories
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -161,9 +166,12 @@ export default function Feed({ initial }: { initial: Story[] }) {
 
       <main>
         {list.length ? (
-          mode === "faultlines"
-            ? list.map((s) => <FaultLineCard key={s.id} s={s} onToast={showToast} />)
-            : list.map((s) => <WireCard key={s.id} s={s} />)
+          list.map((s, i) => (
+            <Fragment key={s.id}>
+              {mode === "faultlines" ? <FaultLineCard s={s} onToast={showToast} /> : <WireCard s={s} />}
+              {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
+            </Fragment>
+          ))
         ) : (
           <div className="empty">
             {mode === "faultlines"

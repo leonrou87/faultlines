@@ -5,11 +5,27 @@ export type Story = {
   id: number; topic: string; neutral_title: string; neutral_body: string;
   is_political: boolean; has_split: boolean;
   left_view: string | null; right_view: string | null;
+  left_summary: string | null; right_summary: string | null;
+  image_url: string | null;
   agree_points: string[]; split_points: string[];
   tension_score: number | null; tension_rationale: string | null; confidence: number | null;
   sources: Source[]; generator: string | null;
+  published_at: string | null;
+  trending: number;
   votes: { left: Vote; right: Vote };
 };
+
+// A 0-100 "trending" score from corroboration, freshness, and engagement.
+function trendingScore(s: { sources?: unknown[]; published_at?: string | null; lvotes: Vote; rvotes: Vote; has_split?: boolean }): number {
+  const srcN = Array.isArray(s.sources) ? s.sources.length : 0;
+  const corroboration = Math.min(45, 11 * Math.log2(1 + srcN)); // many sources => hot
+  const ageH = s.published_at ? (Date.now() - Date.parse(s.published_at)) / 3.6e6 : 48;
+  const fresh = Math.max(0, 30 * Math.pow(0.5, ageH / 10)); // halves every 10h
+  const votes = s.lvotes.up + s.lvotes.down + s.rvotes.up + s.rvotes.down;
+  const engagement = Math.min(20, votes * 2);
+  const splitBoost = s.has_split ? 5 : 0;
+  return Math.max(1, Math.min(100, Math.round(corroboration + fresh + engagement + splitBoost)));
+}
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,16 +49,19 @@ export async function getStories(): Promise<Story[]> {
       if (typeof v === "string") { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } }
       return [];
     };
-    return stories.map((s: Record<string, unknown>) => ({
-      ...s,
-      agree_points: asArray(s.agree_points),
-      split_points: asArray(s.split_points),
-      sources: asArray(s.sources),
-      votes: {
-        left: vmap.get(`${s.id}:left`) ?? { up: 0, down: 0 },
-        right: vmap.get(`${s.id}:right`) ?? { up: 0, down: 0 },
-      },
-    })) as Story[];
+    return stories.map((s: Record<string, unknown>) => {
+      const lvotes = vmap.get(`${s.id}:left`) ?? { up: 0, down: 0 };
+      const rvotes = vmap.get(`${s.id}:right`) ?? { up: 0, down: 0 };
+      const sources = asArray(s.sources);
+      return {
+        ...s,
+        agree_points: asArray(s.agree_points),
+        split_points: asArray(s.split_points),
+        sources,
+        trending: trendingScore({ sources, published_at: s.published_at as string, lvotes, rvotes, has_split: !!s.has_split }),
+        votes: { left: lvotes, right: rvotes },
+      };
+    }) as Story[];
   } catch {
     return [];
   }

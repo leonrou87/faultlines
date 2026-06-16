@@ -36,7 +36,7 @@ export async function getStories(): Promise<Story[]> {
   const h = { apikey: ANON, Authorization: `Bearer ${ANON}` };
   try {
     const [sRes, vRes] = await Promise.all([
-      fetch(`${base}/stories?select=*&order=rank_score.desc&limit=50`, { headers: h, next: { revalidate: 60 } }),
+      fetch(`${base}/stories?select=*&order=rank_score.desc&limit=200`, { headers: h, next: { revalidate: 60 } }),
       fetch(`${base}/votes?select=story_id,side,up,down`, { headers: h, next: { revalidate: 30 } }),
     ]);
     if (!sRes.ok) return [];

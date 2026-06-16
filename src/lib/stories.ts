@@ -28,11 +28,16 @@ export async function getStories(): Promise<Story[]> {
     const votes = vRes.ok ? await vRes.json() : [];
     const vmap = new Map<string, Vote>();
     for (const v of votes) vmap.set(`${v.story_id}:${v.side}`, { up: v.up, down: v.down });
+    const asArray = (v: unknown): unknown[] => {
+      if (Array.isArray(v)) return v;
+      if (typeof v === "string") { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } }
+      return [];
+    };
     return stories.map((s: Record<string, unknown>) => ({
       ...s,
-      agree_points: s.agree_points ?? [],
-      split_points: s.split_points ?? [],
-      sources: s.sources ?? [],
+      agree_points: asArray(s.agree_points),
+      split_points: asArray(s.split_points),
+      sources: asArray(s.sources),
       votes: {
         left: vmap.get(`${s.id}:left`) ?? { up: 0, down: 0 },
         right: vmap.get(`${s.id}:right`) ?? { up: 0, down: 0 },

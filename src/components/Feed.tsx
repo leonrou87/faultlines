@@ -13,6 +13,29 @@ const firstSentence = (t: string | null) => (t || "").split(/(?<=[.!?])\s/)[0] |
 const leftSpin = (s: Story) => s.left_summary || firstSentence(s.left_view);
 const rightSpin = (s: Story) => s.right_summary || firstSentence(s.right_view);
 
+function leanCounts(sources: Story["sources"]) {
+  const c = { l: 0, c: 0, r: 0 };
+  for (const s of sources) { if (s.lean === "left") c.l++; else if (s.lean === "right") c.r++; else c.c++; }
+  return c;
+}
+
+// Source-coverage-by-lean bar (the signal a bias product should lead with).
+function LeanBar({ sources, full = false }: { sources: Story["sources"]; full?: boolean }) {
+  const { l, c, r } = leanCounts(sources);
+  const t = l + c + r || 1;
+  const pct = (n: number) => `${(100 * n) / t}%`;
+  return (
+    <div className={`leanbar${full ? " full" : ""}`} title={`${l} left · ${c} center · ${r} right`}>
+      <div className="lb-track">
+        <i className="lb-l" style={{ width: pct(l) }} />
+        <i className="lb-c" style={{ width: pct(c) }} />
+        <i className="lb-r" style={{ width: pct(r) }} />
+      </div>
+      {full && <div className="lb-counts"><span className="ll">{l} left</span><span>{c} center</span><span className="rr">{r} right</span></div>}
+    </div>
+  );
+}
+
 function TileImage({ s, fl }: { s: Story; fl: boolean }) {
   const [err, setErr] = useState(false);
   return (
@@ -24,7 +47,8 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
         <div className="tile-fallback"><span className="seam" /></div>
       )}
       <div className="tile-badges">
-        {fl ? <span className="pill-fl">Fault Line</span> : <span className="pill-topic">{s.topic}</span>}
+        <span className="pill-topic">{s.topic}</span>
+        {fl && <span className="pill-split">Split</span>}
       </div>
     </div>
   );
@@ -40,15 +64,15 @@ function Tile({ s, onOpen }: { s: Story; onOpen: (s: Story) => void }) {
         {fl ? (
           <>
             <div className="mini">
-              <div className="ml"><b>Left</b>{leftSpin(s)}</div>
-              <div className="mr"><b>Right</b>{rightSpin(s)}</div>
+              <div className="ml"><b>Left</b><span>{leftSpin(s)}</span></div>
+              <div className="mr"><b>Right</b><span>{rightSpin(s)}</span></div>
             </div>
-            <div className="tile-meta"><span className="tile-cta">Read the split</span><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
+            <div className="tile-meta"><LeanBar sources={s.sources} /><span>{s.sources.length} sources</span><span className="tile-cta">Read the split</span></div>
           </>
         ) : (
           <>
             <p className="tile-teaser">{s.neutral_body.slice(0, 150)}{s.neutral_body.length > 150 ? "…" : ""}</p>
-            <div className="tile-meta"><span>{s.topic}</span><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
+            <div className="tile-meta"><LeanBar sources={s.sources} /><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
           </>
         )}
       </div>
@@ -91,9 +115,14 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
-          <div className="kicker">{s.has_split ? "Fault Line" : s.topic}<span className="muted">{s.topic}{s.trending >= 55 ? " · Trending" : ""}</span></div>
+          <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}<span className="muted">{s.sources.length} sources{s.trending >= 55 ? " · Trending" : ""}</span></div>
           <h2>{s.neutral_title}</h2>
           <p className="lede">{s.neutral_body}</p>
+
+          <div className="coverage">
+            <div className="lab">Source coverage</div>
+            <LeanBar sources={s.sources} full />
+          </div>
 
           {s.has_split && (
             <>

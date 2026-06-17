@@ -30,6 +30,20 @@ function trendingScore(s: { sources?: unknown[]; published_at?: string | null; l
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// RSS feeds often hand back tiny thumbnails. Rewrite known size markers to full-res
+// (the <img> falls back to a gradient if an upgraded URL 404s, so this is safe).
+export function upgradeImage(u: string | null): string | null {
+  if (!u) return u;
+  let out = u;
+  out = out.replace(/(\/ace\/[a-z_]+)\/\d{2,4}\//i, "$1/1024/");        // BBC iChef
+  out = out.replace(/(ichef\.bbci\.co\.uk\/news)\/\d{2,4}\//i, "$1/1024/");
+  out = out.replace(/\/width\/\d+\//i, "/width/1200/");                  // Guardian/i-images
+  out = out.replace(/([?&](?:w|width|resize|rw|fit|size|wid))=\d+/gi, "$1=1200"); // CDN width params
+  out = out.replace(/-\d{2,4}x\d{2,4}(\.(?:jpe?g|png|webp|avif|gif))/i, "$1");    // WordPress -800x450 suffix
+  out = out.replace(/(\/resize\/)\d+(x\d+)?\//i, "$11200/");            // generic /resize/240/
+  return out;
+}
+
 export async function getStories(): Promise<Story[]> {
   if (!URL_ || !ANON) return [];
   const base = URL_.replace(/\/$/, '') + '/rest/v1';
@@ -55,6 +69,7 @@ export async function getStories(): Promise<Story[]> {
       const sources = asArray(s.sources);
       return {
         ...s,
+        image_url: upgradeImage(s.image_url as string | null),
         agree_points: asArray(s.agree_points),
         split_points: asArray(s.split_points),
         sources,

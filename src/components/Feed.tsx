@@ -14,14 +14,16 @@ const leftSpin = (s: Story) => s.left_summary || firstSentence(s.left_view);
 const rightSpin = (s: Story) => s.right_summary || firstSentence(s.right_view);
 
 function TileImage({ s, fl }: { s: Story; fl: boolean }) {
+  const [err, setErr] = useState(false);
   return (
     <div className="tile-imgwrap">
-      {s.image_url ? (
+      {s.image_url && !err ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="tile-img" src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+        <img className="tile-img" src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setErr(true)} />
       ) : (
         <div className="tile-fallback"><span className="seam" /></div>
       )}
+      <div className="tile-imgshade" />
       <div className="tile-badges">
         {fl ? <span className="pill-fl">⚡ Fault Line</span> : <span className="pill-topic">{s.topic}</span>}
         <span className="trend">🔥 {s.trending}</span>
@@ -58,6 +60,7 @@ function Tile({ s, onOpen }: { s: Story; onOpen: (s: Story) => void }) {
 
 function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast: (m: string) => void }) {
   const [votes, setVotes] = useState(s.votes);
+  const [imgErr, setImgErr] = useState(false);
   const la = approval(votes.left), ra = approval(votes.right);
   const lFair = votes.left.up, rFair = votes.right.up, fairTotal = lFair + rFair;
   const lPct = fairTotal ? Math.round((100 * lFair) / fairTotal) : 50, rPct = 100 - lPct;
@@ -81,7 +84,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
     <div className="overlay" onClick={onClose}>
       <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        {s.image_url && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" />}
+        {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
           <div className="fl-top">
             {s.has_split ? <span className="fl-badge">⚡ Fault Line</span> : <span className="tag">{s.topic}</span>}

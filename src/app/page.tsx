@@ -1,5 +1,6 @@
 import { getStories } from "@/lib/stories";
 import Feed from "@/components/Feed";
+import Dateline from "@/components/Dateline";
 
 export const revalidate = 60;
 
@@ -8,9 +9,10 @@ export default async function Home() {
   return (
     <>
       <header className="app">
+        <div className="topline" />
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
-          <span className="tagline">where the country splits</span>
+          <Dateline />
         </div>
       </header>
       <Feed initial={stories} />

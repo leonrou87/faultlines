@@ -23,10 +23,8 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
       ) : (
         <div className="tile-fallback"><span className="seam" /></div>
       )}
-      <div className="tile-imgshade" />
       <div className="tile-badges">
-        {fl ? <span className="pill-fl">⚡ Fault Line</span> : <span className="pill-topic">{s.topic}</span>}
-        <span className="trend">🔥 {s.trending}</span>
+        {fl ? <span className="pill-fl">Fault Line</span> : <span className="pill-topic">{s.topic}</span>}
       </div>
     </div>
   );
@@ -42,15 +40,15 @@ function Tile({ s, onOpen }: { s: Story; onOpen: (s: Story) => void }) {
         {fl ? (
           <>
             <div className="mini">
-              <div className="ml"><b>🔵 Left</b>{leftSpin(s)}</div>
-              <div className="mr"><b>Right 🔴</b>{rightSpin(s)}</div>
+              <div className="ml"><b>Left</b>{leftSpin(s)}</div>
+              <div className="mr"><b>Right</b>{rightSpin(s)}</div>
             </div>
-            <div className="tile-meta"><span className="tile-cta">Tap to weigh in →</span><span style={{ marginLeft: "auto" }}>{s.sources.length} sources</span></div>
+            <div className="tile-meta"><span className="tile-cta">Read the split</span><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
           </>
         ) : (
           <>
-            <p className="tile-teaser">{s.neutral_body.slice(0, 140)}{s.neutral_body.length > 140 ? "…" : ""}</p>
-            <div className="tile-meta"><span>{s.topic}</span><span style={{ marginLeft: "auto" }}>{s.sources.length} sources</span></div>
+            <p className="tile-teaser">{s.neutral_body.slice(0, 150)}{s.neutral_body.length > 150 ? "…" : ""}</p>
+            <div className="tile-meta"><span>{s.topic}</span><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
           </>
         )}
       </div>
@@ -70,15 +68,22 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
     try {
       const r = await fetch("/api/vote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ story_id: s.id, side, dir }) });
       const v = await r.json();
-      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Vote counted"); }
-    } catch { onToast("Could not vote"); }
+      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Rating recorded"); }
+      else onToast("Could not record rating");
+    } catch { onToast("Could not record rating"); }
   }
   function share() {
     const url = typeof window !== "undefined" ? window.location.origin : "https://faultlines.kytepush.com";
-    const text = `🔵 vs 🔴 ${s.neutral_title} — how the left and right each frame it`;
+    const text = `${s.neutral_title} — how the left and right each frame it`;
     if (navigator.share) navigator.share({ title: "Fault Lines", text, url }).catch(() => {});
     else { navigator.clipboard?.writeText(`${text} ${url}`); onToast("Link copied"); }
   }
+
+  const verdict = !hasVotes
+    ? "No reader ratings yet — rate each side's framing above."
+    : la != null && ra != null && la !== ra
+      ? `Readers rate the ${la > ra ? "left" : "right"} framing fairer.`
+      : "Readers are evenly split on fairness.";
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -86,10 +91,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
-          <div className="fl-top">
-            {s.has_split ? <span className="fl-badge">⚡ Fault Line</span> : <span className="tag">{s.topic}</span>}
-            <span className="fl-topic">{s.topic} · 🔥 {s.trending} trending</span>
-          </div>
+          <div className="kicker">{s.has_split ? "Fault Line" : s.topic}<span className="muted">{s.topic}{s.trending >= 55 ? " · Trending" : ""}</span></div>
           <h2>{s.neutral_title}</h2>
           <p className="lede">{s.neutral_body}</p>
 
@@ -98,44 +100,48 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
               <div className="vs-label">How each side frames it</div>
               <div className="arena">
                 <div className="side left">
-                  <div className="who">🔵 The Left</div>
+                  <div className="who">The Left</div>
                   <div className="frame">{s.left_view}</div>
                   <div className="vote-row">
-                    <button className="vbtn" onClick={() => vote("left", "up")}>👍 Fair</button>
-                    <button className="vbtn" onClick={() => vote("left", "down")}>👎</button>
-                    <span className="score">{la == null ? "—" : `${la}%`}<small>{votes.left.up + votes.left.down} votes</small></span>
+                    <button className="vbtn" onClick={() => vote("left", "up")}>Fair</button>
+                    <button className="vbtn" onClick={() => vote("left", "down")}>Unfair</button>
+                    <span className="score">{la == null ? "—" : `${la}%`} <small>fair</small></span>
                   </div>
                 </div>
                 <div className="side right">
-                  <div className="who">The Right 🔴</div>
+                  <div className="who">The Right</div>
                   <div className="frame">{s.right_view}</div>
                   <div className="vote-row">
-                    <span className="score">{ra == null ? "—" : `${ra}%`}<small>{votes.right.up + votes.right.down} votes</small></span>
-                    <button className="vbtn" onClick={() => vote("right", "up")}>👍 Fair</button>
-                    <button className="vbtn" onClick={() => vote("right", "down")}>👎</button>
+                    <button className="vbtn" onClick={() => vote("right", "up")}>Fair</button>
+                    <button className="vbtn" onClick={() => vote("right", "down")}>Unfair</button>
+                    <span className="score">{ra == null ? "—" : `${ra}%`} <small>fair</small></span>
                   </div>
                 </div>
               </div>
-              <div className="tug">
-                <div className="tug-bar"><div className="tug-l" style={{ width: `${lPct}%` }} /><div className="tug-r" style={{ width: `${rPct}%` }} /></div>
-                <div className="tug-meta"><span>🔵 {lPct}%</span><span>{rPct}% 🔴</span></div>
-                <div className="tug-verdict"><span className="hot">{!hasVotes ? "Be the first to weigh in 👆" : la != null && ra != null && la !== ra ? `The crowd finds the ${la > ra ? "LEFT" : "RIGHT"} framing fairer` : "The crowd is dead split"}</span></div>
+
+              <div className="rating">
+                <div className="lab">Reader fairness rating</div>
+                <div className="bar"><div className="l" style={{ width: `${lPct}%` }} /><div className="r" style={{ width: `${rPct}%` }} /></div>
+                <div className="bar-meta"><span className="ll">Left {lPct}%</span><span className="rr">{rPct}% Right</span></div>
+                <div className="verdict">{verdict}</div>
               </div>
+
               {(s.agree_points.length > 0 || s.split_points.length > 0) && (
                 <div className="cols">
-                  <div className="col agree"><h6>✓ Both sides agree</h6><ul>{s.agree_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
-                  <div className="col split"><h6>⚡ Where they split</h6><ul>{s.split_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
+                  <div className="col"><h6>What both sides accept</h6><ul>{s.agree_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
+                  <div className="col"><h6>Where they diverge</h6><ul>{s.split_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
                 </div>
               )}
+
               <div className="fl-foot">
-                {s.tension_score != null && <span className="tension-badge">🌡 Tension {s.tension_score}/100</span>}
-                <button className="share" onClick={share}>↗ Share the split</button>
+                {s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
+                <button className="share" onClick={share}>Share</button>
               </div>
             </>
           )}
 
           <div className="fl-sources">
-            {s.sources.slice(0, 8).map((src, i) => (
+            {s.sources.slice(0, 10).map((src, i) => (
               <a key={i} className="chip" href={src.url} target="_blank" rel="noopener nofollow"><span className={`dot ${src.lean}`} />{src.name}</a>
             ))}
           </div>
@@ -160,15 +166,11 @@ export default function Feed({ initial }: { initial: Story[] }) {
   return (
     <>
       <div className="modeswitch">
-        <button className="mode faultlines" aria-selected={mode === "faultlines"} onClick={() => setMode("faultlines")}>
-          <span className="mc">{splits.length}</span>
-          <div className="mt">⚡ The Fault Lines</div>
-          <div className="md">Where left &amp; right collide</div>
+        <button className="mode" aria-selected={mode === "faultlines"} onClick={() => setMode("faultlines")}>
+          <span className="mt">The Fault Lines<span className="count">{splits.length}</span></span>
         </button>
-        <button className="mode wire" aria-selected={mode === "wire"} onClick={() => setMode("wire")}>
-          <span className="mc">{wire.length}</span>
-          <div className="mt">📰 The Wire</div>
-          <div className="md">Straight, neutral news</div>
+        <button className="mode" aria-selected={mode === "wire"} onClick={() => setMode("wire")}>
+          <span className="mt">The Wire<span className="count">{wire.length}</span></span>
         </button>
       </div>
 
@@ -191,8 +193,8 @@ export default function Feed({ initial }: { initial: Story[] }) {
         ) : (
           <div className="empty">
             {mode === "faultlines"
-              ? (splits.length ? `No fault lines in “${LABEL[topic]}” right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. Check The Wire.")
-              : `No stories in “${LABEL[topic]}” yet.`}
+              ? (splits.length ? `No fault lines in ${LABEL[topic]} right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. See The Wire.")
+              : `No stories in ${LABEL[topic]} yet.`}
           </div>
         )}
       </main>

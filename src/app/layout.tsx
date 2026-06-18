@@ -36,10 +36,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         {ADSENSE && (
           <Script
+            id="adsbygoogle-init"
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE}`}
             crossOrigin="anonymous"
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
           />
         )}
               <script defer src="https://kytepush.com/track.js"></script>

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-export default function ShareMenu({ title, path, onToast }: { title: string; path: string; onToast: (m: string) => void }) {
+export default function ShareMenu({ title, path, onToast }: { title: string; path: string; onToast?: (m: string) => void }) {
+  const toast = (m: string) => onToast?.(m);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function ShareMenu({ title, path, onToast }: { title: string; pat
 
   async function nativeOrCopy() {
     if (navigator.share) { try { await navigator.share({ title, url }); return; } catch { /* cancelled */ } }
-    try { await navigator.clipboard.writeText(url); onToast("Link copied"); } catch { onToast("Copy failed"); }
+    try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { toast("Copy failed"); }
     setOpen(false);
   }
 

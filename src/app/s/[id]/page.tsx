@@ -58,7 +58,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
         <div className="fl-foot">
           {s.has_split && s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
-          <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} onToast={() => {}} />
+          <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} />
         </div>
 
         <div className="fl-sources">

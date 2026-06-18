@@ -1,72 +1,97 @@
 import { getCityStories } from "@/lib/stories";
+import { getWeather, getIssues, CITIES } from "@/lib/city";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 export const revalidate = 120;
 
-const CITIES: Record<string, string> = { seattle: "Seattle", sf: "San Francisco" };
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const name = CITIES[slug];
-  if (!name) return { title: "City not found" };
-  return { title: `${name} — Fault Lines`, description: `Local ${name} news, summarized neutrally.` };
+  const c = CITIES[slug];
+  if (!c) return { title: "City not found" };
+  return { title: `${c.name} — Fault Lines`, description: `Local ${c.name} news, issues, weather and what to do — summarized neutrally.` };
 }
 
 export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const name = CITIES[slug];
-  if (!name) notFound();
-  const stories = await getCityStories(slug);
+  const c = CITIES[slug];
+  if (!c) notFound();
+  const [stories, weather, issues] = await Promise.all([getCityStories(slug), getWeather(c), getIssues(slug)]);
 
   return (
     <>
       <header className="app">
-        <div className="topline" />
+        <div className="topline" style={{ background: c.accent }} />
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
-          <span className="dateline" style={{ marginLeft: "auto" }}>{name.toUpperCase()} EDITION</span>
+          {weather && <span className="wx">{weather.icon} {weather.temp}° <span className="wx-l">{weather.label}</span></span>}
         </div>
       </header>
 
       <main>
-        <h1 style={{ fontFamily: "var(--display)", fontWeight: 900, fontSize: 26, letterSpacing: "-.5px", margin: "6px 0 4px" }}>{name}</h1>
-        <p style={{ color: "var(--ink-faint)", fontSize: 13, margin: "0 0 18px" }}>
-          Local news from {name}, summarized neutrally from local outlets.{" "}
-          <a href="/" style={{ color: "var(--accent)", textDecoration: "none" }}>National →</a>
-        </p>
+        <section className="city-hero" style={{ borderColor: c.accent }}>
+          <div className="city-edition" style={{ color: c.accent }}>{c.name.toUpperCase()} EDITION</div>
+          <h1 className="city-name">{c.name}</h1>
+          <div className="city-tag">{c.tagline}</div>
+          <p className="city-impact">{c.impact}</p>
+        </section>
 
-        {stories.length ? (
-          <div className="grid">
-            {stories.map((s) => (
-              <a key={s.id} className="tile" href={`/s/${s.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                <div className="tile-imgwrap">
-                  {s.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="tile-img" src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className="tile-fallback"><span className="seam" /></div>
-                  )}
-                  <div className="tile-badges">
-                    <span className="pill-topic">{s.topic}</span>
-                    {s.has_split && <span className="pill-split">Split</span>}
+        {issues.length > 0 && (
+          <section className="city-sec">
+            <h2 className="city-h" style={{ borderColor: c.accent }}>The Issues <span>go deep + weigh in</span></h2>
+            <div className="issue-grid">
+              {issues.map((it) => (
+                <a key={it.slug} className="issue-card" href={`/city/${slug}/issue/${it.slug}`} style={{ borderTopColor: c.accent }}>
+                  <h3>{it.title}</h3>
+                  <p>{it.dek}</p>
+                  <span className="issue-cta" style={{ color: c.accent }}>Read &amp; vote →</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="city-sec">
+          <h2 className="city-h" style={{ borderColor: c.accent }}>Local News <span>{stories.length} stories</span></h2>
+          {stories.length ? (
+            <div className="grid">
+              {stories.map((s) => (
+                <a key={s.id} className="tile" href={`/s/${s.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  <div className="tile-imgwrap">
+                    {s.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="tile-img" src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                    ) : <div className="tile-fallback"><span className="seam" /></div>}
+                    <div className="tile-badges"><span className="pill-topic">{s.topic}</span>{s.has_split && <span className="pill-split">Split</span>}</div>
                   </div>
-                </div>
-                <div className="tile-body">
-                  <h3>{s.neutral_title}</h3>
-                  <p className="tile-teaser">{s.neutral_body.slice(0, 150)}{s.neutral_body.length > 150 ? "…" : ""}</p>
-                  <div className="tile-meta"><span>{s.sources.length} sources</span></div>
-                </div>
-              </a>
+                  <div className="tile-body">
+                    <h3>{s.neutral_title}</h3>
+                    <p className="tile-teaser">{s.neutral_body.slice(0, 140)}{s.neutral_body.length > 140 ? "…" : ""}</p>
+                    <div className="tile-meta"><span>{s.sources.length} sources</span></div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : <div className="empty">Local stories fill in as the newsroom runs.</div>}
+        </section>
+
+        <section className="city-sec">
+          <h2 className="city-h" style={{ borderColor: c.accent }}>Things to Do <span>local picks</span></h2>
+          <div className="ttd-grid">
+            {c.thingsToDo.map((g) => (
+              <div className="ttd-col" key={g.group}>
+                <h4 style={{ color: c.accent }}>{g.group}</h4>
+                {g.items.map((it) => (
+                  <div className="ttd-item" key={it.name}><b>{it.name}</b><span>{it.note}</span></div>
+                ))}
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="empty">No {name} stories yet — the local edition fills as the newsroom runs. Check back soon.</div>
-        )}
+        </section>
       </main>
 
       <footer className="app">
-        <div>Editions: <a href="/city/seattle">Seattle</a> · <a href="/city/sf">San Francisco</a> · <a href="/">National</a></div>
+        <div><strong style={{ color: "var(--ink-dim)" }}>Editions:</strong> <a href="/city/seattle">Seattle</a> · <a href="/city/sf">San Francisco</a> · <a href="/">National</a></div>
       </footer>
     </>
   );

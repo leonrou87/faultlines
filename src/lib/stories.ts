@@ -80,6 +80,33 @@ export async function getStory(id: string | number): Promise<Story | null> {
   }
 }
 
+export async function getCityStories(city: string): Promise<Story[]> {
+  if (!URL_ || !ANON) return [];
+  const base = URL_.replace(/\/$/, "") + "/rest/v1";
+  const h = { apikey: ANON, Authorization: `Bearer ${ANON}` };
+  const asArray = (v: unknown): unknown[] => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string") { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } }
+    return [];
+  };
+  try {
+    const r = await fetch(`${base}/stories?city=eq.${encodeURIComponent(city)}&select=*&order=rank_score.desc&limit=60`, { headers: h, next: { revalidate: 120 } });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return rows.map((s: Record<string, unknown>) => ({
+      ...s,
+      image_url: upgradeImage(s.image_url as string | null),
+      agree_points: asArray(s.agree_points),
+      split_points: asArray(s.split_points),
+      sources: asArray(s.sources),
+      trending: 0,
+      votes: { left: { up: 0, down: 0 }, right: { up: 0, down: 0 } },
+    })) as Story[];
+  } catch {
+    return [];
+  }
+}
+
 export async function getStories(): Promise<Story[]> {
   if (!URL_ || !ANON) return [];
   const base = URL_.replace(/\/$/, '') + '/rest/v1';

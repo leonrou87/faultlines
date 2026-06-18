@@ -21,6 +21,9 @@ export default async function Home() {
       <footer className="app">
         <div>We don&apos;t tell you what to think — we show you where the country splits, and why.</div>
         <div style={{ marginTop: 8 }}>
+          <strong style={{ color: "var(--ink-dim)" }}>Editions:</strong> <a href="/city/seattle">Seattle</a> · <a href="/city/sf">San Francisco</a>
+        </div>
+        <div style={{ marginTop: 8 }}>
           <a href="/about">Methodology</a> · <a href="/privacy">Privacy</a>
         </div>
       </footer>

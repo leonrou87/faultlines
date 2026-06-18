@@ -12,7 +12,9 @@ export default async function Home() {
         <div className="topline" />
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
-          <Dateline />
+          <div className="mast-actions">
+            <Dateline />
+          </div>
         </div>
       </header>
       <Feed initial={stories} />

@@ -2,6 +2,7 @@
 import { Fragment, useMemo, useState } from "react";
 import type { Story, Vote } from "@/lib/stories";
 import AdSlot from "@/components/AdSlot";
+import ShareMenu from "@/components/ShareMenu";
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -54,10 +55,10 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
   );
 }
 
-function Tile({ s, onOpen }: { s: Story; onOpen: (s: Story) => void }) {
+function Tile({ s, onOpen, hero = false }: { s: Story; onOpen: (s: Story) => void; hero?: boolean }) {
   const fl = s.has_split;
   return (
-    <article className="tile" onClick={() => onOpen(s)}>
+    <article className={`tile${hero ? " hero" : ""}`} onClick={() => onOpen(s)}>
       <TileImage s={s} fl={fl} />
       <div className="tile-body">
         <h3>{s.neutral_title}</h3>
@@ -96,13 +97,6 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       else onToast("Could not record rating");
     } catch { onToast("Could not record rating"); }
   }
-  function share() {
-    const url = typeof window !== "undefined" ? window.location.origin : "https://faultlines.kytepush.com";
-    const text = `${s.neutral_title} — how the left and right each frame it`;
-    if (navigator.share) navigator.share({ title: "Fault Lines", text, url }).catch(() => {});
-    else { navigator.clipboard?.writeText(`${text} ${url}`); onToast("Link copied"); }
-  }
-
   const verdict = !hasVotes
     ? "No reader ratings yet — rate each side's framing above."
     : la != null && ra != null && la !== ra
@@ -162,12 +156,13 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
                 </div>
               )}
 
-              <div className="fl-foot">
-                {s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
-                <button className="share" onClick={share}>Share</button>
-              </div>
             </>
           )}
+
+          <div className="fl-foot">
+            {s.has_split && s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
+            <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} onToast={onToast} />
+          </div>
 
           <div className="fl-sources">
             {s.sources.slice(0, 10).map((src, i) => (
@@ -194,27 +189,30 @@ export default function Feed({ initial }: { initial: Story[] }) {
 
   return (
     <>
-      <div className="modeswitch">
-        <button className="mode" aria-selected={mode === "faultlines"} onClick={() => setMode("faultlines")}>
-          <span className="mt">The Fault Lines<span className="count">{splits.length}</span></span>
-        </button>
-        <button className="mode" aria-selected={mode === "wire"} onClick={() => setMode("wire")}>
-          <span className="mt">The Wire<span className="count">{wire.length}</span></span>
-        </button>
+      <div className="subnav">
+        <div className="subnav-inner">
+          <div className="modeswitch">
+            <button className="mode" aria-selected={mode === "faultlines"} onClick={() => setMode("faultlines")}>
+              <span className="mt">The Fault Lines<span className="count">{splits.length}</span></span>
+            </button>
+            <button className="mode" aria-selected={mode === "wire"} onClick={() => setMode("wire")}>
+              <span className="mt">The Wire<span className="count">{wire.length}</span></span>
+            </button>
+          </div>
+          <nav className="topics" role="tablist">
+            {TOPICS.map((t) => (
+              <button key={t} className="topic-pill" role="tab" aria-selected={t === topic} onClick={() => setTopic(t)}>{LABEL[t]}</button>
+            ))}
+          </nav>
+        </div>
       </div>
-
-      <nav className="topics" role="tablist">
-        {TOPICS.map((t) => (
-          <button key={t} className="topic-pill" role="tab" aria-selected={t === topic} onClick={() => setTopic(t)}>{LABEL[t]}</button>
-        ))}
-      </nav>
 
       <main>
         {list.length ? (
           <div className="grid">
             {list.map((s, i) => (
               <Fragment key={s.id}>
-                <Tile s={s} onOpen={setOpen} />
+                <Tile s={s} onOpen={setOpen} hero={i === 0} />
                 {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
               </Fragment>
             ))}
@@ -229,6 +227,19 @@ export default function Feed({ initial }: { initial: Story[] }) {
       </main>
 
       {open && <Modal s={open} onClose={() => setOpen(null)} onToast={showToast} />}
+
+      <nav className="bottomnav">
+        <button aria-selected={mode === "faultlines"} onClick={() => { setMode("faultlines"); window.scrollTo(0, 0); }}>
+          <span className="bn-ic">F</span>Fault Lines
+        </button>
+        <button aria-selected={mode === "wire"} onClick={() => { setMode("wire"); window.scrollTo(0, 0); }}>
+          <span className="bn-ic">W</span>The Wire
+        </button>
+        <button onClick={() => { window.location.href = "/about"; }}>
+          <span className="bn-ic">i</span>About
+        </button>
+      </nav>
+
       <div className={`toast${toast ? " show" : ""}`}>{toast}</div>
     </>
   );

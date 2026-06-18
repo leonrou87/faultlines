@@ -12,13 +12,22 @@ const sans = Libre_Franklin({ subsets: ["latin"], weight: ["400", "500", "600", 
 
 const ADSENSE = process.env.NEXT_PUBLIC_ADSENSE_CLIENT; // e.g. "ca-pub-1234567890123456"
 
+const SITE = "https://faultlines.kytepush.com";
+const DESC = "The top stories, summarized neutrally — and for political stories, how the left and the right each frame the same facts.";
+
 export const metadata: Metadata = {
-  title: "Fault Lines — where the country splits, and why",
-  description:
-    "The top stories, summarized neutrally — and for political stories, how the left and the right each frame the same facts.",
+  metadataBase: new URL(SITE),
+  title: { default: "Fault Lines — where the country splits, and why", template: "%s · Fault Lines" },
+  description: DESC,
+  applicationName: "Fault Lines",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Fault Lines" },
+  openGraph: { title: "Fault Lines", description: DESC, url: SITE, siteName: "Fault Lines", type: "website" },
+  twitter: { card: "summary_large_image", title: "Fault Lines", description: DESC },
 };
 
-export const viewport: Viewport = { themeColor: "#0b0d10", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: "#0f1113", width: "device-width", initialScale: 1, viewportFit: "cover", maximumScale: 1,
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -33,6 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             strategy="afterInteractive"
           />
         )}
+              <script defer src="https://kytepush.com/track.js"></script>
       </body>
     </html>
   );

@@ -129,8 +129,8 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
 .side .score small{font-weight:600;color:var(--ink-faint);font-size:10px}
 .rating{margin:16px 0 4px}
 .rating .lab{margin-bottom:7px}
-.bar{height:6px;border-radius:3px;overflow:hidden;display:flex;background:var(--line)}
-.bar .l{background:var(--left)}.bar .r{background:var(--right)}
+.fbar{height:6px;border-radius:3px;overflow:hidden;display:flex;background:var(--line)}
+.fbar .l{background:var(--left)}.fbar .r{background:var(--right)}
 .bar-meta{display:flex;justify-content:space-between;font-size:11px;margin-top:7px;color:var(--ink-dim)}
 .bar-meta .ll{color:var(--left)}.bar-meta .rr{color:var(--right)}
 .verdict{font-size:13px;margin-top:10px;color:var(--ink-dim)}

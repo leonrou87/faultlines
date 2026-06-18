@@ -144,7 +144,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
 
               <div className="rating">
                 <div className="lab">Reader fairness rating</div>
-                <div className="bar"><div className="l" style={{ width: `${lPct}%` }} /><div className="r" style={{ width: `${rPct}%` }} /></div>
+                <div className="fbar"><div className="l" style={{ width: `${lPct}%` }} /><div className="r" style={{ width: `${rPct}%` }} /></div>
                 <div className="bar-meta"><span className="ll">Left {lPct}%</span><span className="rr">{rPct}% Right</span></div>
                 <div className="verdict">{verdict}</div>
               </div>

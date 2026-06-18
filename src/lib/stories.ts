@@ -45,6 +45,41 @@ export function upgradeImage(u: string | null): string | null {
   return out;
 }
 
+export async function getStory(id: string | number): Promise<Story | null> {
+  if (!URL_ || !ANON) return null;
+  const base = URL_.replace(/\/$/, "") + "/rest/v1";
+  const h = { apikey: ANON, Authorization: `Bearer ${ANON}` };
+  const asArray = (v: unknown): unknown[] => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string") { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } }
+    return [];
+  };
+  try {
+    const [sRes, vRes] = await Promise.all([
+      fetch(`${base}/stories?id=eq.${id}&select=*&limit=1`, { headers: h, next: { revalidate: 120 } }),
+      fetch(`${base}/votes?story_id=eq.${id}&select=side,up,down`, { headers: h, next: { revalidate: 30 } }),
+    ]);
+    if (!sRes.ok) return null;
+    const rows = await sRes.json();
+    const s = rows?.[0];
+    if (!s) return null;
+    const votes = vRes.ok ? await vRes.json() : [];
+    const vm = (side: string) => votes.find((v: { side: string }) => v.side === side) || { up: 0, down: 0 };
+    const sources = asArray(s.sources);
+    return {
+      ...s,
+      image_url: upgradeImage(s.image_url),
+      agree_points: asArray(s.agree_points),
+      split_points: asArray(s.split_points),
+      sources,
+      trending: 0,
+      votes: { left: { up: vm("left").up, down: vm("left").down }, right: { up: vm("right").up, down: vm("right").down } },
+    } as Story;
+  } catch {
+    return null;
+  }
+}
+
 export async function getStories(): Promise<Story[]> {
   if (!URL_ || !ANON) return [];
   const base = URL_.replace(/\/$/, '') + '/rest/v1';

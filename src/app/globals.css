@@ -18,8 +18,8 @@ a{color:inherit}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 @media(max-width:600px){.wrap{padding:0 16px}}
 
-/* ---- masthead ---- */
-header.app{position:sticky;top:0;z-index:60;background:rgba(15,17,19,.95);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
+/* ---- masthead (scrolls normally; the sub-nav below is what sticks) ---- */
+header.app{position:relative;z-index:30;background:var(--bg);border-bottom:1px solid var(--line)}
 .topline{height:2px;background:linear-gradient(90deg,var(--left),var(--accent) 50%,var(--right));opacity:.75}
 .bar{max-width:var(--maxw);margin:0 auto;padding:0 24px;height:var(--hh);display:flex;align-items:center;gap:14px}
 @media(max-width:600px){.bar{padding:0 16px}}
@@ -34,7 +34,7 @@ header.app{position:sticky;top:0;z-index:60;background:rgba(15,17,19,.95);backdr
 @media(max-width:600px){.dateline .dl-date{display:none}}
 
 /* ---- sticky sub-nav (sections + topics), full-bleed bg ---- */
-.subnav{position:sticky;top:var(--hh);z-index:55;background:rgba(15,17,19,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.subnav{position:sticky;top:0;z-index:55;background:rgba(15,17,19,.96);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
 .subnav-inner{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 @media(max-width:600px){.subnav-inner{padding:0 16px}}
 .modeswitch{display:flex;gap:28px;border-bottom:1px solid var(--line)}

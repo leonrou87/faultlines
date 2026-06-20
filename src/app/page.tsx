@@ -1,6 +1,7 @@
 import { getStories } from "@/lib/stories";
 import Feed from "@/components/Feed";
 import Dateline from "@/components/Dateline";
+import EditionsMenu from "@/components/EditionsMenu";
 
 export const revalidate = 60;
 
@@ -13,6 +14,7 @@ export default async function Home() {
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
           <div className="mast-actions">
+            <EditionsMenu current="national" />
             <Dateline />
           </div>
         </div>

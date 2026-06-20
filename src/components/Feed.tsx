@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { Story, Vote } from "@/lib/stories";
 import AdSlot from "@/components/AdSlot";
 import ShareMenu from "@/components/ShareMenu";
@@ -182,6 +182,15 @@ export default function Feed({ initial }: { initial: Story[] }) {
   const [toast, setToast] = useState("");
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1600); };
 
+  // Deep-link the open story so it has a shareable URL; back button / ✕ closes it.
+  const openStory = (s: Story) => { setOpen(s); try { history.pushState({ flStory: s.id }, "", `/s/${s.id}`); } catch { /* noop */ } };
+  const closeModal = () => { if (typeof history !== "undefined" && history.state?.flStory) history.back(); else setOpen(null); };
+  useEffect(() => {
+    const onPop = () => setOpen(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const splits = useMemo(() => initial.filter((s) => s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
   const wire = useMemo(() => initial.filter((s) => !s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
   const source = mode === "faultlines" ? splits : wire;
@@ -212,7 +221,7 @@ export default function Feed({ initial }: { initial: Story[] }) {
           <div className="grid">
             {list.map((s, i) => (
               <Fragment key={s.id}>
-                <Tile s={s} onOpen={setOpen} hero={i === 0} />
+                <Tile s={s} onOpen={openStory} hero={i === 0} />
                 {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
               </Fragment>
             ))}
@@ -226,7 +235,7 @@ export default function Feed({ initial }: { initial: Story[] }) {
         )}
       </main>
 
-      {open && <Modal s={open} onClose={() => setOpen(null)} onToast={showToast} />}
+      {open && <Modal s={open} onClose={closeModal} onToast={showToast} />}
 
       <nav className="bottomnav">
         <button aria-selected={mode === "faultlines"} onClick={() => { setMode("faultlines"); window.scrollTo(0, 0); }}>

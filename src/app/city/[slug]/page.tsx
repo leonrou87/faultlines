@@ -2,6 +2,7 @@ import { getCityStories } from "@/lib/stories";
 import { getWeather, getIssues, CITIES } from "@/lib/city";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import EditionsMenu from "@/components/EditionsMenu";
 
 export const revalidate = 120;
 
@@ -24,7 +25,10 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
         <div className="topline" style={{ background: c.accent }} />
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
-          {weather && <span className="wx">{weather.icon} {weather.temp}° <span className="wx-l">{weather.label}</span></span>}
+          <div className="mast-actions">
+            <EditionsMenu current={slug} />
+            {weather && <span className="wx">{weather.icon} {weather.temp}° <span className="wx-l">{weather.label}</span></span>}
+          </div>
         </div>
       </header>
 

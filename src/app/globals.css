@@ -108,6 +108,7 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
 .kicker{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:9px;display:flex;gap:10px;align-items:center}
 .kicker .muted{color:var(--ink-faint)}
 .kicker .ksplit{border:1px solid var(--line-2);color:var(--ink-faint);padding:1px 6px;border-radius:3px;font-size:8.5px;letter-spacing:1px}
+.kicker .khot{color:var(--right);font-weight:800;letter-spacing:.5px}
 .modal h2{font-family:var(--display);font-weight:900;font-size:29px;line-height:1.12;margin:0 0 13px;letter-spacing:-.5px}
 .modal .lede{font-family:var(--serif);font-size:16px;color:var(--ink-dim);line-height:1.7;margin-bottom:4px;white-space:pre-line}
 
@@ -161,6 +162,16 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
   .bottomnav button .bn-ic{font-family:var(--display);font-size:16px;font-weight:900;line-height:1}
   .bottomnav button[aria-selected="true"]{color:var(--ink)}
 }
+
+/* ---- local banner ---- */
+.localbanner{display:flex;align-items:center;gap:12px;max-width:var(--maxw);margin:14px auto 0;padding:13px 18px;background:linear-gradient(100deg,rgba(47,143,157,.16),rgba(184,146,63,.10));border:1px solid var(--line-2);border-radius:10px;text-decoration:none;color:var(--ink);transition:.15s}
+.localbanner:hover{border-color:var(--accent)}
+@media(max-width:600px){.localbanner{margin:12px 16px 0;padding:12px 14px}}
+.lb-pin{font-size:18px}
+.lb-txt{font-size:13.5px;color:var(--ink-dim)}
+.lb-txt b{color:var(--ink);font-weight:700}
+.lb-go{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;letter-spacing:.3px}
+.pill-local{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:#2f8f9d;color:#06121a}
 
 /* ---- editions menu (masthead nav) ---- */
 .ed-menu{position:relative}

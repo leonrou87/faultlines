@@ -11,8 +11,10 @@ export type Story = {
   tension_score: number | null; tension_rationale: string | null; confidence: number | null;
   sources: Source[]; generator: string | null;
   published_at: string | null;
+  city?: string | null;
   trending: number;
   votes: { left: Vote; right: Vote };
+  _city?: string; _cityName?: string; // attached when a local story is mixed into the national feed
 };
 
 // A 0-100 "trending" score from corroboration, freshness, and engagement.

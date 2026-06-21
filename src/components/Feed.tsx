@@ -48,7 +48,7 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
         <div className="tile-fallback"><span className="seam" /></div>
       )}
       <div className="tile-badges">
-        <span className="pill-topic">{s.topic}</span>
+        {s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
         {fl && <span className="pill-split">Split</span>}
       </div>
     </div>
@@ -109,7 +109,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
-          <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}<span className="muted">{s.sources.length} sources{s.trending >= 55 ? " · Trending" : ""}</span></div>
+          <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}{s.has_split && (s.tension_score || 0) >= 60 && <span className="khot">🔥 Hotly contested</span>}<span className="muted">{s.sources.length} sources</span></div>
           <h2>{s.neutral_title}</h2>
           <p className="lede">{s.neutral_body}</p>
 
@@ -120,7 +120,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
 
           {s.has_split && (
             <>
-              <div className="vs-label">How each side frames it</div>
+              <div className="vs-label">How each side frames it — whose side are you on?</div>
               <div className="arena">
                 <div className="side left">
                   <div className="who">The Left</div>
@@ -175,8 +175,8 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
   );
 }
 
-export default function Feed({ initial }: { initial: Story[] }) {
-  const [mode, setMode] = useState<"faultlines" | "wire">("faultlines");
+export default function Feed({ initial, local = [] }: { initial: Story[]; local?: Story[] }) {
+  const [mode, setMode] = useState<"faultlines" | "wire" | "local">("faultlines");
   const [topic, setTopic] = useState<string>("all");
   const [open, setOpen] = useState<Story | null>(null);
   const [toast, setToast] = useState("");
@@ -191,10 +191,23 @@ export default function Feed({ initial }: { initial: Story[] }) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const splits = useMemo(() => initial.filter((s) => s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
+  // Debate score: tension + how much the crowd is fighting about it → drives "Most Debated".
+  const debate = (s: Story) => (s.tension_score || 0) + (s.votes.left.up + s.votes.left.down + s.votes.right.up + s.votes.right.down) * 4;
+  const splits = useMemo(() => initial.filter((s) => s.has_split).sort((a, b) => debate(b) - debate(a)), [initial]);
   const wire = useMemo(() => initial.filter((s) => !s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
-  const source = mode === "faultlines" ? splits : wire;
-  const list = topic === "all" ? source : source.filter((s) => s.topic === topic);
+
+  const base = mode === "local" ? local : mode === "faultlines" ? splits : wire;
+  const filtered = topic === "all" ? base : base.filter((s) => s.topic === topic);
+  // Always mix a little local into the national views so the homepage is national + local.
+  const list = useMemo(() => {
+    if (mode === "local" || topic !== "all" || !local.length) return filtered;
+    const out: Story[] = []; let li = 0;
+    filtered.forEach((s, i) => {
+      out.push(s);
+      if (i > 0 && (i + 1) % 7 === 0 && li < local.length) out.push(local[li++]);
+    });
+    return out;
+  }, [filtered, local, mode, topic]);
 
   return (
     <>
@@ -202,11 +215,16 @@ export default function Feed({ initial }: { initial: Story[] }) {
         <div className="subnav-inner">
           <div className="modeswitch">
             <button className="mode" aria-selected={mode === "faultlines"} onClick={() => setMode("faultlines")}>
-              <span className="mt">The Fault Lines<span className="count">{splits.length}</span></span>
+              <span className="mt">🔥 Most Debated<span className="count">{splits.length}</span></span>
             </button>
             <button className="mode" aria-selected={mode === "wire"} onClick={() => setMode("wire")}>
               <span className="mt">The Wire<span className="count">{wire.length}</span></span>
             </button>
+            {local.length > 0 && (
+              <button className="mode" aria-selected={mode === "local"} onClick={() => setMode("local")}>
+                <span className="mt">📍 Local<span className="count">{local.length}</span></span>
+              </button>
+            )}
           </div>
           <nav className="topics" role="tablist">
             {TOPICS.map((t) => (
@@ -230,7 +248,9 @@ export default function Feed({ initial }: { initial: Story[] }) {
           <div className="empty">
             {mode === "faultlines"
               ? (splits.length ? `No fault lines in ${LABEL[topic]} right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. See The Wire.")
-              : `No stories in ${LABEL[topic]} yet.`}
+              : mode === "local"
+                ? "Local stories fill in as the newsroom runs — check the Seattle & SF editions."
+                : `No stories in ${LABEL[topic]} yet.`}
           </div>
         )}
       </main>
@@ -244,8 +264,8 @@ export default function Feed({ initial }: { initial: Story[] }) {
         <button aria-selected={mode === "wire"} onClick={() => { setMode("wire"); window.scrollTo(0, 0); }}>
           <span className="bn-ic">W</span>The Wire
         </button>
-        <button onClick={() => { window.location.href = "/about"; }}>
-          <span className="bn-ic">i</span>About
+        <button aria-selected={mode === "local"} onClick={() => { setMode("local"); window.scrollTo(0, 0); }}>
+          <span className="bn-ic">◎</span>Local
         </button>
       </nav>
 

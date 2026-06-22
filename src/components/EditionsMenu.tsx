@@ -23,7 +23,7 @@ export default function EditionsMenu({ current = "national" }: { current?: strin
   return (
     <div className="ed-menu" ref={ref}>
       <button className="ed-btn" onClick={() => setOpen((o) => !o)} aria-haspopup="true" aria-expanded={open}>
-        <span className="ed-dot" /> {cur.label} <span className="ed-caret">▾</span>
+        <span className="ed-dot" /> <span className="ed-lbl">{cur.label}</span> <span className="ed-caret">▾</span>
       </button>
       {open && (
         <div className="ed-pop">

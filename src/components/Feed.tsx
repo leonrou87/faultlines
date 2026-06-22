@@ -42,13 +42,18 @@ function LeanBar({ sources, full = false }: { sources: Story["sources"]; full?: 
 
 function TileImage({ s, fl }: { s: Story; fl: boolean }) {
   const [err, setErr] = useState(false);
+  const showImg = s.image_url && !err;
   return (
     <div className="tile-imgwrap">
-      {s.image_url && !err ? (
+      {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="tile-img" src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setErr(true)} />
+        <img className="tile-img" src={s.image_url!} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setErr(true)} />
       ) : (
-        <div className="tile-fallback"><span className="seam" /></div>
+        // Designed cover when there's no usable photo — looks intentional, not broken.
+        <div className="tile-fallback" data-topic={s._cityName ? "local" : s.topic}>
+          <span className="tf-mark">Fault<i className="seam" />Lines</span>
+          <span className="tf-topic">{s._cityName || s.topic}</span>
+        </div>
       )}
       <div className="tile-badges">
         {s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
@@ -217,13 +222,21 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
   const filtered = topic === "all" ? base : base.filter((s) => s.topic === topic);
   // Always mix a little local into the national views so the homepage is national + local.
   const list = useMemo(() => {
-    if (mode === "local" || topic !== "all" || !local.length) return filtered;
-    const out: Story[] = []; let li = 0;
-    filtered.forEach((s, i) => {
-      out.push(s);
-      if (i > 0 && (i + 1) % 7 === 0 && li < local.length) out.push(local[li++]);
-    });
-    return out;
+    let base2 = filtered;
+    if (!(mode === "local" || topic !== "all" || !local.length)) {
+      const out: Story[] = []; let li = 0;
+      filtered.forEach((s, i) => {
+        out.push(s);
+        if (i > 0 && (i + 1) % 7 === 0 && li < local.length) out.push(local[li++]);
+      });
+      base2 = out;
+    }
+    // Promote the first story that has a real photo into the hero slot (no placeholder hero).
+    if (base2.length > 1 && !base2[0].image_url) {
+      const hi = base2.findIndex((s) => !!s.image_url);
+      if (hi > 0) base2 = [base2[hi], ...base2.slice(0, hi), ...base2.slice(hi + 1)];
+    }
+    return base2;
   }, [filtered, local, mode, topic]);
 
   return (

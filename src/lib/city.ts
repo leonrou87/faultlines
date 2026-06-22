@@ -6,7 +6,7 @@ const H = { apikey: ANON || "", Authorization: `Bearer ${ANON || ""}` };
 export type CityCfg = {
   name: string; lat: number; lon: number; accent: string; tagline: string;
   impact: string;
-  thingsToDo: { group: string; items: { name: string; note: string }[] }[];
+  thingsToDo?: { group: string; items: { name: string; note: string }[] }[];
 };
 
 export const CITIES: Record<string, CityCfg> = {
@@ -53,6 +53,26 @@ export const CITIES: Record<string, CityCfg> = {
         { name: "Muir Woods day trip", note: "Old-growth redwoods just over the bridge." },
       ]},
     ],
+  },
+  nyc: {
+    name: "New York", lat: 40.7128, lon: -74.006, accent: "#c2603f",
+    tagline: "The City That Never Sleeps",
+    impact: "Eight million people, five boroughs, and the loudest argument in America about housing, transit, safety and money.",
+  },
+  la: {
+    name: "Los Angeles", lat: 34.0522, lon: -118.2437, accent: "#caa23f",
+    tagline: "The City of Angels",
+    impact: "Sprawl, sunshine and Hollywood — wrestling with homelessness, fires, traffic and the cost of the California dream.",
+  },
+  chicago: {
+    name: "Chicago", lat: 41.8781, lon: -87.6298, accent: "#4a83b5",
+    tagline: "The Second City",
+    impact: "The capital of the Midwest — big shoulders, deep neighborhoods, and a long fight over crime, schools and budgets.",
+  },
+  dc: {
+    name: "Washington, D.C.", lat: 38.9072, lon: -77.0369, accent: "#7a9a5e",
+    tagline: "The District",
+    impact: "A company town where the company is the federal government — plus a real city of neighborhoods beyond the marble.",
   },
 };
 

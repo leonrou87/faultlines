@@ -1,22 +1,32 @@
+import { headers } from "next/headers";
 import { getStories, getCityStories } from "@/lib/stories";
 import { getWeather, CITIES } from "@/lib/city";
 import Feed from "@/components/Feed";
 import Dateline from "@/components/Dateline";
 import EditionsMenu from "@/components/EditionsMenu";
 
-export const revalidate = 60;
+// Map a Vercel-detected city name to one of our editions.
+const GEO: Record<string, string> = {
+  "seattle": "seattle", "san francisco": "sf", "new york": "nyc",
+  "los angeles": "la", "chicago": "chicago", "washington": "dc",
+};
 
 export default async function Home() {
-  const [stories, seattle, sf, wx] = await Promise.all([
-    getStories(),
-    getCityStories("seattle"),
-    getCityStories("sf"),
-    getWeather(CITIES.seattle),
-  ]);
-  const local = [
-    ...seattle.map((s) => ({ ...s, _city: "seattle", _cityName: "Seattle" })),
-    ...sf.map((s) => ({ ...s, _city: "sf", _cityName: "San Francisco" })),
-  ];
+  const h = await headers();
+  const geoCity = (h.get("x-vercel-ip-city") || "").toLowerCase();
+  const mySlug = GEO[geoCity] || null;
+
+  const [stories] = await Promise.all([getStories()]);
+  // Prefer the visitor's city for the local mix; otherwise blend Seattle + SF so there's always local.
+  const localSlugs = mySlug ? [mySlug] : ["seattle", "sf"];
+  const localSets = await Promise.all(localSlugs.map((s) => getCityStories(s)));
+  const local = localSlugs.flatMap((slug, i) =>
+    localSets[i].map((s) => ({ ...s, _city: slug, _cityName: CITIES[slug]?.name || slug }))
+  );
+  const wx = mySlug && CITIES[mySlug] ? await getWeather(CITIES[mySlug]) : await getWeather(CITIES.seattle);
+  const banner = mySlug
+    ? { name: CITIES[mySlug].name, slug: mySlug, text: `You're in ${CITIES[mySlug].name} — local stories are mixed into your feed.` }
+    : { name: "Seattle", slug: "seattle", text: "Local editions are live — Seattle, SF, New York, LA, Chicago & D.C." };
 
   return (
     <>
@@ -31,10 +41,10 @@ export default async function Home() {
         </div>
       </header>
 
-      <a className="localbanner" href="/city/seattle">
+      <a className="localbanner" href={`/city/${banner.slug}`}>
         <span className="lb-pin">📍</span>
-        <span className="lb-txt"><b>Local editions are live.</b> Seattle{wx ? ` ${wx.icon} ${wx.temp}°` : ""} &amp; San Francisco — dive into your city.</span>
-        <span className="lb-go">Go local →</span>
+        <span className="lb-txt"><b>{banner.text.split(" — ")[0]}</b>{wx ? ` ${wx.icon} ${wx.temp}°` : ""} {banner.text.includes(" — ") ? "— " + banner.text.split(" — ")[1] : ""}</span>
+        <span className="lb-go">{banner.name} edition →</span>
       </a>
 
       <Feed initial={stories} local={local} />
@@ -42,7 +52,8 @@ export default async function Home() {
       <footer className="app">
         <div>We don&apos;t tell you what to think — we show you where the country splits, and why.</div>
         <div style={{ marginTop: 8 }}>
-          <strong style={{ color: "var(--ink-dim)" }}>Editions:</strong> <a href="/city/seattle">Seattle</a> · <a href="/city/sf">San Francisco</a>
+          <strong style={{ color: "var(--ink-dim)" }}>Editions:</strong>{" "}
+          <a href="/city/seattle">Seattle</a> · <a href="/city/sf">SF</a> · <a href="/city/nyc">New York</a> · <a href="/city/la">LA</a> · <a href="/city/chicago">Chicago</a> · <a href="/city/dc">D.C.</a>
         </div>
         <div style={{ marginTop: 8 }}>
           <a href="/about">Methodology</a> · <a href="/privacy">Privacy</a>

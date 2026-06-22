@@ -5,6 +5,10 @@ const EDITIONS = [
   { key: "national", label: "National", href: "/" },
   { key: "seattle", label: "Seattle", href: "/city/seattle" },
   { key: "sf", label: "San Francisco", href: "/city/sf" },
+  { key: "nyc", label: "New York", href: "/city/nyc" },
+  { key: "la", label: "Los Angeles", href: "/city/la" },
+  { key: "chicago", label: "Chicago", href: "/city/chicago" },
+  { key: "dc", label: "Washington, D.C.", href: "/city/dc" },
 ];
 
 export default function EditionsMenu({ current = "national" }: { current?: string }) {

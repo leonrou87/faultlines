@@ -79,6 +79,7 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
           ) : <div className="empty">Local stories fill in as the newsroom runs.</div>}
         </section>
 
+        {c.thingsToDo && (
         <section className="city-sec">
           <h2 className="city-h" style={{ borderColor: c.accent }}>Things to Do <span>local picks</span></h2>
           <div className="ttd-grid">
@@ -92,6 +93,7 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
             ))}
           </div>
         </section>
+        )}
       </main>
 
       <footer className="app">

@@ -34,7 +34,7 @@ export default function Privacy() {
         <p>This site is not directed to children under 13 and we do not knowingly collect their data.</p>
 
         <h3>Contact</h3>
-        <p>Questions: leonrou87@gmail.com</p>
+        <p>Questions &amp; support: kytepush@gmail.com</p>
 
         <p style={{ marginTop: 30 }}><a href="/" style={{ color: "var(--accent)" }}>← Back to the feed</a></p>
       </article>

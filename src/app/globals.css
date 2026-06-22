@@ -163,6 +163,24 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
   .bottomnav button[aria-selected="true"]{color:var(--ink)}
 }
 
+/* ---- auth ---- */
+.auth{position:relative}
+.auth-btn{background:var(--accent);border:0;color:#15110a;border-radius:6px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.2px}
+.auth-btn:hover{filter:brightness(1.08)}
+.auth-avatar{width:30px;height:30px;border-radius:50%;border:1px solid var(--line-2);background:var(--card-2);color:var(--ink);font-weight:800;font-size:13px;cursor:pointer;overflow:hidden;padding:0}
+.auth-avatar img{width:100%;height:100%;object-fit:cover}
+.auth-pop{position:absolute;right:0;top:38px;background:#1b1f24;border:1px solid var(--line-2);border-radius:9px;padding:8px;min-width:170px;z-index:80;box-shadow:0 18px 40px -20px #000}
+.auth-pop.wide{min-width:240px;padding:12px}
+.auth-h{font-size:13px;font-weight:800;margin:2px 4px 10px}
+.auth-who{font-size:12px;color:var(--ink-dim);padding:4px 6px 8px}
+.auth-pop>button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink-dim);padding:8px 8px;font-size:13px;border-radius:5px;cursor:pointer}
+.auth-pop>button:hover{background:var(--card-2);color:var(--ink)}
+.auth-oauth{border:1px solid var(--line-2)!important;color:var(--ink)!important;margin-bottom:7px;text-align:center!important;font-weight:600}
+.auth-oauth.primary{background:var(--accent)!important;color:#15110a!important;border-color:var(--accent)!important}
+.auth-or{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);text-align:center;margin:8px 0 8px}
+.auth-email{width:100%;background:var(--bg);border:1px solid var(--line-2);color:var(--ink);border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:8px}
+.auth-msg{font-size:11.5px;color:var(--ink-dim);margin-top:8px;padding:0 4px}
+
 /* ---- local banner ---- */
 .localbanner{display:flex;align-items:center;gap:12px;max-width:var(--maxw);margin:14px auto 0;padding:13px 18px;background:linear-gradient(100deg,rgba(47,143,157,.16),rgba(184,146,63,.10));border:1px solid var(--line-2);border-radius:10px;text-decoration:none;color:var(--ink);transition:.15s}
 .localbanner:hover{border-color:var(--accent)}

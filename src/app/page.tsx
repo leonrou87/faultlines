@@ -4,6 +4,7 @@ import { getWeather, CITIES } from "@/lib/city";
 import Feed from "@/components/Feed";
 import Dateline from "@/components/Dateline";
 import EditionsMenu from "@/components/EditionsMenu";
+import AuthButton from "@/components/AuthButton";
 
 // Map a Vercel-detected city name to one of our editions.
 const GEO: Record<string, string> = {
@@ -35,8 +36,9 @@ export default async function Home() {
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
           <div className="mast-actions">
-            <EditionsMenu current="national" />
             <Dateline />
+            <EditionsMenu current="national" />
+            <AuthButton />
           </div>
         </div>
       </header>

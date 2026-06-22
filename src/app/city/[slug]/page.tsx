@@ -3,6 +3,7 @@ import { getWeather, getIssues, CITIES } from "@/lib/city";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import EditionsMenu from "@/components/EditionsMenu";
+import AuthButton from "@/components/AuthButton";
 
 export const revalidate = 120;
 
@@ -26,8 +27,9 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
           <div className="mast-actions">
-            <EditionsMenu current={slug} />
             {weather && <span className="wx">{weather.icon} {weather.temp}° <span className="wx-l">{weather.label}</span></span>}
+            <EditionsMenu current={slug} />
+            <AuthButton />
           </div>
         </div>
       </header>

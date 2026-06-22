@@ -3,6 +3,9 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import type { Story, Vote } from "@/lib/stories";
 import AdSlot from "@/components/AdSlot";
 import ShareMenu from "@/components/ShareMenu";
+import SignInWall from "@/components/SignInWall";
+import { canRead, recordRead } from "@/lib/gate";
+import { supabase } from "@/lib/supabase-browser";
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -179,11 +182,25 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
   const [mode, setMode] = useState<"faultlines" | "wire" | "local">("faultlines");
   const [topic, setTopic] = useState<string>("all");
   const [open, setOpen] = useState<Story | null>(null);
+  const [wall, setWall] = useState(false);
+  const [authed, setAuthed] = useState(true); // assume allowed until session checked (no flash for members)
   const [toast, setToast] = useState("");
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1600); };
 
-  // Deep-link the open story so it has a shareable URL; back button / ✕ closes it.
-  const openStory = (s: Story) => { setOpen(s); try { history.pushState({ flStory: s.id }, "", `/s/${s.id}`); } catch { /* noop */ } };
+  useEffect(() => {
+    const sb = supabase(); if (!sb) { setAuthed(false); return; }
+    sb.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = sb.auth.onAuthStateChange((_e, session) => setAuthed(!!session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // Deep-link the open story (shareable URL). After 3 free reads, non-members hit the free sign-in wall.
+  const openStory = (s: Story) => {
+    if (!authed && !canRead(s.id)) { setWall(true); return; }
+    recordRead(s.id);
+    setOpen(s);
+    try { history.pushState({ flStory: s.id }, "", `/s/${s.id}`); } catch { /* noop */ }
+  };
   const closeModal = () => { if (typeof history !== "undefined" && history.state?.flStory) history.back(); else setOpen(null); };
   useEffect(() => {
     const onPop = () => setOpen(null);
@@ -256,6 +273,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
       </main>
 
       {open && <Modal s={open} onClose={closeModal} onToast={showToast} />}
+      {wall && <SignInWall onClose={() => setWall(false)} />}
 
       <nav className="bottomnav">
         <button aria-selected={mode === "faultlines"} onClick={() => { setMode("faultlines"); window.scrollTo(0, 0); }}>

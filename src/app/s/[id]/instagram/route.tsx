@@ -37,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             </div>
           </div>
         ) : null}
-        <div style={{ display: "flex", fontSize: 26, color: "#717880", marginTop: 44, letterSpacing: 1 }}>faultlines.kytepush.com{s ? ` · ${s.sources.length} sources` : ""}</div>
+        <div style={{ display: "flex", fontSize: 26, color: "#717880", marginTop: 44, letterSpacing: 1 }}>faultlines.kytepush.com{s && s.has_split ? " · the left & right, side by side" : ""}</div>
       </div>
     ),
     { width: 1080, height: 1080 },

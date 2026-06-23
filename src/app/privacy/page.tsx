@@ -27,8 +27,8 @@ export default function Privacy() {
         Third-party vendors, including Google, use cookies to serve ads based on prior visits.</p>
 
         <h3>Data storage</h3>
-        <p>Story content and anonymous vote tallies are stored with Supabase. We link out to original sources;
-        when you click a source chip you are subject to that publisher&apos;s own privacy policy.</p>
+        <p>Story content and anonymous vote tallies are stored with Supabase. We also record anonymous,
+        aggregate usage events (such as article reads and votes) to understand what readers engage with.</p>
 
         <h3>Children</h3>
         <p>This site is not directed to children under 13 and we do not knowingly collect their data.</p>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { track } from "@/lib/track";
 import type { Provider } from "@supabase/supabase-js";
 
 const PROVIDERS: { id: Provider; label: string }[] = [
@@ -37,11 +38,13 @@ export default function AuthButton() {
 
   async function oauth(provider: Provider) {
     const sb = supabase(); if (!sb) return;
+    track("signin", provider);
     const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
     if (error) setMsg(error.message.includes("provider is not enabled") ? "That provider isn't enabled yet." : error.message);
   }
   async function magicLink() {
     const sb = supabase(); if (!sb || !email) return;
+    track("signin", "email");
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
     setMsg(error ? error.message : "Check your email for a sign-in link.");
   }

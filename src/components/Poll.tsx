@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { Poll } from "@/lib/city";
+import { track } from "@/lib/track";
 
 export default function PollWidget({ poll }: { poll: Poll }) {
   const [votes, setVotes] = useState<number[]>(poll.votes);
@@ -11,6 +12,7 @@ export default function PollWidget({ poll }: { poll: Poll }) {
     if (voted) return;
     setVotes((v) => v.map((n, idx) => (idx === i ? n + 1 : n))); // optimistic
     setVoted(true);
+    track("poll_vote", String(poll.id));
     try {
       await fetch("/api/poll", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ poll_id: poll.id, option_idx: i }) });
     } catch { /* keep optimistic */ }

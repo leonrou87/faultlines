@@ -31,7 +31,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             <div style={{ display: "flex", flex: 1, background: "#341916", borderLeft: "5px solid #bd6a60", padding: "16px 20px", fontSize: 24, color: "#e0a59e", fontWeight: 700 }}>How the RIGHT frames it</div>
           </div>
         ) : null}
-        <div style={{ display: "flex", fontSize: 22, color: "#717880", marginTop: 30, letterSpacing: 1 }}>faultlines.kytepush.com{s ? ` · ${s.sources.length} sources` : ""}</div>
+        <div style={{ display: "flex", fontSize: 22, color: "#717880", marginTop: 30, letterSpacing: 1 }}>faultlines.kytepush.com{split ? " · the left & right, side by side" : ""}</div>
       </div>
     ),
     { ...size },

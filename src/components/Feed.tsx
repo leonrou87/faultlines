@@ -1,11 +1,12 @@
 "use client";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import type { Story, Vote } from "@/lib/stories";
+import type { Story, Vote, Coverage } from "@/lib/stories";
 import AdSlot from "@/components/AdSlot";
 import ShareMenu from "@/components/ShareMenu";
 import SignInWall from "@/components/SignInWall";
 import { canRead, recordRead } from "@/lib/gate";
 import { supabase } from "@/lib/supabase-browser";
+import { track } from "@/lib/track";
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -17,25 +18,20 @@ const firstSentence = (t: string | null) => (t || "").split(/(?<=[.!?])\s/)[0] |
 const leftSpin = (s: Story) => s.left_summary || firstSentence(s.left_view);
 const rightSpin = (s: Story) => s.right_summary || firstSentence(s.right_view);
 
-function leanCounts(sources: Story["sources"]) {
-  const c = { l: 0, c: 0, r: 0 };
-  for (const s of sources) { if (s.lean === "left") c.l++; else if (s.lean === "right") c.r++; else c.c++; }
-  return c;
-}
-
-// Source-coverage-by-lean bar (the signal a bias product should lead with).
-function LeanBar({ sources, full = false }: { sources: Story["sources"]; full?: boolean }) {
-  const { l, c, r } = leanCounts(sources);
+// Coverage-by-lean bar (the signal a bias product should lead with). Anonymized — shows how the
+// political spectrum is covering a story, never which outlets.
+function LeanBar({ coverage, full = false }: { coverage: Coverage; full?: boolean }) {
+  const { l, c, r } = coverage;
   const t = l + c + r || 1;
   const pct = (n: number) => `${(100 * n) / t}%`;
   return (
-    <div className={`leanbar${full ? " full" : ""}`} title={`${l} left · ${c} center · ${r} right`}>
+    <div className={`leanbar${full ? " full" : ""}`} title="Coverage across the political spectrum">
       <div className="lb-track">
         <i className="lb-l" style={{ width: pct(l) }} />
         <i className="lb-c" style={{ width: pct(c) }} />
         <i className="lb-r" style={{ width: pct(r) }} />
       </div>
-      {full && <div className="lb-counts"><span className="ll">{l} left</span><span>{c} center</span><span className="rr">{r} right</span></div>}
+      {full && <div className="lb-counts"><span className="ll">Left</span><span>Center</span><span className="rr">Right</span></div>}
     </div>
   );
 }
@@ -76,12 +72,12 @@ function Tile({ s, onOpen, hero = false }: { s: Story; onOpen: (s: Story) => voi
               <div className="ml"><b>Left</b><span>{leftSpin(s)}</span></div>
               <div className="mr"><b>Right</b><span>{rightSpin(s)}</span></div>
             </div>
-            <div className="tile-meta"><LeanBar sources={s.sources} /><span>{s.sources.length} sources</span><span className="tile-cta">Read the split</span></div>
+            <div className="tile-meta"><LeanBar coverage={s.coverage} /><span>Across the spectrum</span><span className="tile-cta">Read the split</span></div>
           </>
         ) : (
           <>
             <p className="tile-teaser">{s.neutral_body.slice(0, 150)}{s.neutral_body.length > 150 ? "…" : ""}</p>
-            <div className="tile-meta"><LeanBar sources={s.sources} /><span>{s.sources.length} sources</span>{s.trending >= 55 && <span>Trending</span>}</div>
+            <div className="tile-meta"><LeanBar coverage={s.coverage} />{s.trending >= 55 ? <span>Trending</span> : <span>Across the spectrum</span>}</div>
           </>
         )}
       </div>
@@ -101,7 +97,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
     try {
       const r = await fetch("/api/vote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ story_id: s.id, side, dir }) });
       const v = await r.json();
-      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Rating recorded"); }
+      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Rating recorded"); track("vote", `${side}:${dir}`); }
       else onToast("Could not record rating");
     } catch { onToast("Could not record rating"); }
   }
@@ -117,13 +113,13 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
-          <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}{s.has_split && (s.tension_score || 0) >= 60 && <span className="khot">🔥 Hotly contested</span>}<span className="muted">{s.sources.length} sources</span></div>
+          <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}{s.has_split && (s.tension_score || 0) >= 60 && <span className="khot">🔥 Hotly contested</span>}</div>
           <h2>{s.neutral_title}</h2>
           <p className="lede">{s.neutral_body}</p>
 
           <div className="coverage">
-            <div className="lab">Source coverage</div>
-            <LeanBar sources={s.sources} full />
+            <div className="lab">Across the spectrum</div>
+            <LeanBar coverage={s.coverage} full />
           </div>
 
           {s.has_split && (
@@ -171,12 +167,6 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
             {s.has_split && s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
             <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} onToast={onToast} />
           </div>
-
-          <div className="fl-sources">
-            {s.sources.slice(0, 10).map((src, i) => (
-              <a key={i} className="chip" href={src.url} target="_blank" rel="noopener nofollow"><span className={`dot ${src.lean}`} />{src.name}</a>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -201,8 +191,9 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
 
   // Deep-link the open story (shareable URL). After 3 free reads, non-members hit the free sign-in wall.
   const openStory = (s: Story) => {
-    if (!authed && !canRead(s.id)) { setWall(true); return; }
+    if (!authed && !canRead(s.id)) { setWall(true); track("wall"); return; }
     recordRead(s.id);
+    track("read", s._cityName || s.city || s.topic);
     setOpen(s);
     try { history.pushState({ flStory: s.id }, "", `/s/${s.id}`); } catch { /* noop */ }
   };

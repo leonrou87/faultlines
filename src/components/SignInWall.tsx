@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { track } from "@/lib/track";
 import type { Provider } from "@supabase/supabase-js";
 
 const PROVIDERS: { id: Provider; label: string }[] = [
@@ -15,11 +16,13 @@ export default function SignInWall({ onClose }: { onClose?: () => void }) {
 
   async function oauth(provider: Provider) {
     const sb = supabase(); if (!sb) return;
+    track("signin_wall", provider);
     const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.href } });
     if (error) setMsg(error.message.includes("not enabled") ? "That provider isn't turned on yet — try the email link." : error.message);
   }
   async function magic() {
     const sb = supabase(); if (!sb || !email) return;
+    track("signin_wall", "email");
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
     setMsg(error ? error.message : "Check your email for your free sign-in link.");
   }

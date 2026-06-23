@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/track";
 
 const EDITIONS = [
   { key: "national", label: "National", href: "/" },
@@ -29,7 +30,7 @@ export default function EditionsMenu({ current = "national" }: { current?: strin
         <div className="ed-pop">
           <div className="ed-pop-h">Editions</div>
           {EDITIONS.map((e) => (
-            <a key={e.key} href={e.href} className={`ed-item${e.key === current ? " on" : ""}`}>{e.label}</a>
+            <a key={e.key} href={e.href} onClick={() => track("edition", e.key)} className={`ed-item${e.key === current ? " on" : ""}`}>{e.label}</a>
           ))}
         </div>
       )}

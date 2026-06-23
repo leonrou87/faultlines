@@ -11,14 +11,14 @@ export default function About() {
         <p><em>We don&apos;t tell you what to think — we show you where the country splits, and why.</em></p>
 
         <h3>What we publish</h3>
-        <p>Only the Top 50 stories anyone needs, ranked across Top, Politics, Business, Tech, World and Sports.
-        Every article is <strong>our own original prose</strong> summarizing facts reported by many outlets —
-        we never republish source text. Each story links out to every original report.</p>
+        <p>The stories anyone needs, ranked across Top, Politics, Business, Tech, World and Sports, plus local
+        editions for major cities. Every article is <strong>our own original prose</strong> summarizing the facts —
+        we never republish or reproduce anyone else&apos;s text.</p>
 
         <h3>How a story is made</h3>
-        <p>A newsroom pipeline ingests headlines and short snippets from feeds across the spectrum, clusters all
-        coverage of one real-world event into a single story, ranks by corroboration and recency, then writes a
-        neutral summary using only facts corroborated by at least two independent sources.</p>
+        <p>A newsroom pipeline reads a broad range of reporting from across the political spectrum, clusters all
+        coverage of one real-world event into a single story, ranks by breadth of coverage and recency, then writes a
+        neutral summary using only facts corroborated across multiple independent reports.</p>
 
         <h3>&ldquo;The Split&rdquo;</h3>
         <p>For genuinely political stories with coverage on both sides, we add a steelmanned <strong>Left View</strong>
@@ -28,19 +28,19 @@ export default function About() {
         neutral-only. An automated fairness check audits every split before it can publish.</p>
 
         <h3>Originality</h3>
-        <p>Before publishing, a deterministic gate checks the body against source snippets for verbatim runs and close
-        paraphrase. If prose is too close it is rewritten, then if needed rebuilt from corroborated facts alone, so
-        nothing traceable to a source reaches readers.</p>
+        <p>Before publishing, a deterministic gate checks the body for verbatim runs and close paraphrase against the
+        underlying reporting. If prose is too close it is rewritten, then if needed rebuilt from corroborated facts
+        alone, so nothing traceable reaches readers.</p>
 
-        <h3>Source lean labels</h3>
+        <h3>The spectrum</h3>
         <div className="legend">
           <span><i className="dot left" style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--left)", display: "inline-block" }} /> Left</span>
           <span><i className="dot center" style={{ width: 10, height: 10, borderRadius: "50%", background: "#8a93a0", display: "inline-block" }} /> Center</span>
           <span><i className="dot right" style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--right)", display: "inline-block" }} /> Right</span>
-          <span><i className="dot wire" style={{ width: 10, height: 10, borderRadius: "50%", background: "#b9912e", display: "inline-block" }} /> Wire</span>
         </div>
-        <p>Lean labels describe an outlet&apos;s typical editorial posture, not the accuracy of any single report.
-        They are reviewed and disclosed, never hidden.</p>
+        <p>The coverage bar on each story shows how the political spectrum — left, center and right — is covering it,
+        in aggregate. It reflects the balance of perspectives, not the accuracy of any single report. We never
+        identify individual outlets.</p>
 
         <p style={{ marginTop: 30 }}><a href="/" style={{ color: "var(--accent)" }}>← Back to the feed</a></p>
       </article>

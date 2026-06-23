@@ -73,7 +73,7 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
                   <div className="tile-body">
                     <h3>{s.neutral_title}</h3>
                     <p className="tile-teaser">{s.neutral_body.slice(0, 140)}{s.neutral_body.length > 140 ? "…" : ""}</p>
-                    <div className="tile-meta"><span>{s.sources.length} sources</span></div>
+                    <div className="tile-meta"><span>{s.topic}</span></div>
                   </div>
                 </a>
               ))}

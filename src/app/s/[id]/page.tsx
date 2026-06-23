@@ -26,19 +26,33 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const s = await getStory(id);
   if (!s) notFound();
 
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: s.neutral_title,
+    description: s.neutral_body.slice(0, 200),
+    ...(s.image_url ? { image: [s.image_url] } : {}),
+    ...(s.published_at ? { datePublished: s.published_at, dateModified: s.published_at } : {}),
+    articleSection: s.topic,
+    author: { "@type": "Organization", name: "Fault Lines" },
+    publisher: { "@type": "Organization", name: "Fault Lines" },
+    mainEntityOfPage: `https://faultlines.kytepush.com/s/${s.id}`,
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <header className="app">
         <div className="topline" />
         <div className="bar"><a href="/" className="wordmark">Fault<span className="seam" />Lines</a></div>
       </header>
       <article className="modal-inner" style={{ maxWidth: 680, margin: "0 auto", padding: "26px 20px 90px" }}>
-        <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}<span className="muted">{s.sources.length} sources</span></div>
+        <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}</div>
         <h2 style={{ fontFamily: "var(--display)", fontWeight: 900, fontSize: 32, lineHeight: 1.1, margin: "0 0 14px", letterSpacing: "-.5px" }}>{s.neutral_title}</h2>
         {s.image_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={s.image_url} alt="" referrerPolicy="no-referrer" style={{ width: "100%", borderRadius: 8, marginBottom: 16, aspectRatio: "16/9", objectFit: "cover" }} />}
         <p className="lede" style={{ whiteSpace: "pre-line" }}>{s.neutral_body}</p>
 
-        <div className="coverage"><div className="lab">Source coverage</div><LeanCoverage sources={s.sources} /></div>
+        <div className="coverage"><div className="lab">Across the spectrum</div><LeanCoverage coverage={s.coverage} /></div>
 
         {s.has_split && (
           <>
@@ -61,11 +75,6 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
           <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} />
         </div>
 
-        <div className="fl-sources">
-          {s.sources.slice(0, 12).map((src, i) => (
-            <a key={i} className="chip" href={src.url} target="_blank" rel="noopener nofollow"><span className={`dot ${src.lean}`} />{src.name}</a>
-          ))}
-        </div>
         <p style={{ marginTop: 26 }}><a href="/" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>← Back to Fault Lines</a></p>
       </article>
     </>

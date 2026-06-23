@@ -7,7 +7,7 @@ import SignInWall from "@/components/SignInWall";
 import { canRead, recordRead } from "@/lib/gate";
 import { supabase } from "@/lib/supabase-browser";
 import { track } from "@/lib/track";
-import { savedIds, isSaved, toggleSave, onSavesChanged } from "@/lib/saves";
+import { savedIds, toggleSave, onSavesChanged, initSaves } from "@/lib/saves";
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -327,14 +327,16 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
   useEffect(() => {
     const sb = supabase(); if (!sb) { setAuthed(false); return; }
     sb.auth.getSession().then(({ data }) => setAuthed(!!data.session));
-    const { data: sub } = sb.auth.onAuthStateChange((_e, session) => setAuthed(!!session));
+    const { data: sub } = sb.auth.onAuthStateChange((_e, session) => { setAuthed(!!session); initSaves(); });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     const sync = () => setSaved(new Set(savedIds()));
     sync();
-    return onSavesChanged(sync);
+    const off = onSavesChanged(sync);
+    initSaves(); // hydrate from cloud when signed in; emits → sync
+    return off;
   }, []);
   const onToggleSave = (id: number) => { const now = toggleSave(id); track("save", String(now)); showToast(now ? "Saved" : "Removed"); };
 

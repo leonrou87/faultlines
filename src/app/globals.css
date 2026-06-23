@@ -211,6 +211,27 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
   .bottomnav button[aria-selected="true"]{color:var(--ink)}
 }
 
+/* ---- onboarding (first-run) ---- */
+.intro-overlay{position:fixed;inset:0;background:rgba(8,9,11,.82);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;animation:introfade .3s ease}
+@keyframes introfade{from{opacity:0}to{opacity:1}}
+.intro{background:var(--bg);border:1px solid var(--line-2);border-radius:16px;max-width:440px;width:100%;overflow:hidden;box-shadow:0 30px 80px -30px #000;animation:introrise .35s cubic-bezier(.2,.7,.3,1)}
+@keyframes introrise{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.intro-top{height:4px;background:linear-gradient(90deg,var(--left),var(--accent) 50%,var(--right))}
+.intro-body{padding:26px 26px 22px;text-align:center}
+.intro-mark{font-family:var(--display);font-weight:900;font-size:21px;letter-spacing:-.5px;display:inline-flex;align-items:center;color:var(--ink);margin-bottom:16px}
+.intro-mark .seam{display:inline-block;width:2px;height:16px;background:var(--accent);transform:skewX(-12deg);margin:0 3px}
+.intro h2{font-family:var(--display);font-weight:900;font-size:27px;line-height:1.1;letter-spacing:-.6px;margin:0 0 11px}
+.intro-sub{font-family:var(--serif);font-size:14.5px;color:var(--ink-dim);line-height:1.6;margin:0 0 20px}
+.intro-sub b{color:var(--ink);font-weight:700}.intro-sub b.ll{color:var(--left)}.intro-sub b.rr{color:var(--right)}
+.intro-steps{display:flex;flex-direction:column;gap:13px;text-align:left;margin-bottom:22px}
+.intro-step{display:flex;gap:13px;align-items:flex-start}
+.intro-step .is-ic{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--bg-soft);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--accent)}
+.intro-step b{display:block;font-size:14px;font-weight:800;margin-bottom:1px}
+.intro-step span{font-size:12.5px;color:var(--ink-faint);line-height:1.4}
+.intro-cta{width:100%;background:var(--accent);color:#15110a;border:0;border-radius:9px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.2px}
+.intro-cta:hover{filter:brightness(1.07)}
+.intro-foot{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);margin-top:14px}
+
 /* ---- sign-in wall (free meter) ---- */
 .wall{background:var(--bg);border:1px solid var(--line-2);border-radius:14px;max-width:440px;width:100%;margin:auto;padding:28px 26px;text-align:center}
 .wall-kick{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Source_Serif_4, Libre_Franklin } from "next/font/google";
 import Script from "next/script";
+import Onboarding from "@/components/Onboarding";
 import "./globals.css";
 
 // Masthead + headlines: a bold grotesque built for headlines (CNN/Fox-style punch).
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${display.variable} ${serif.variable} ${sans.variable}`}>
       <body>
         {children}
+        <Onboarding />
         {ADSENSE && (
           <Script
             id="adsbygoogle-init"

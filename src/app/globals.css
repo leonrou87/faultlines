@@ -120,6 +120,38 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
   .tile.hero .tile-teaser{font-size:15.5px;-webkit-line-clamp:4}
 }
 
+/* ---- Today's Fault Line (daily hero) ---- */
+.daily{cursor:pointer;display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--line-2);border-radius:14px;overflow:hidden;margin:6px 0 30px;background:linear-gradient(180deg,var(--card-2),var(--card));transition:border-color .18s}
+.daily:hover{border-color:var(--accent)}
+.daily-media{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#1a1f26,#15171c)}
+.daily-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.daily:hover .daily-media img{transform:scale(1.03)}
+.daily-flag{position:absolute;top:12px;left:12px;font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;padding:6px 11px;border-radius:5px;background:var(--accent);color:#15110a;box-shadow:0 2px 14px rgba(184,146,63,.45)}
+.daily-body{padding:20px 22px 22px}
+.daily-body h2{font-family:var(--display);font-weight:900;font-size:27px;line-height:1.08;letter-spacing:-.6px;margin:0 0 16px}
+.daily-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px}
+.daily-split .ds{border-radius:9px;padding:13px 15px;border:1px solid var(--line)}
+.daily-split .ds.left{background:linear-gradient(180deg,var(--left-tint),transparent 70%)}
+.daily-split .ds.right{background:linear-gradient(180deg,var(--right-tint),transparent 70%)}
+.daily-split .ds b{display:block;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.daily-split .ds.left b{color:var(--left)}.daily-split .ds.right b{color:var(--right)}
+.daily-split .ds span{font-family:var(--serif);font-size:13.5px;color:var(--ink-dim);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.daily-verdict{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-dim);margin-bottom:16px}
+.daily-verdict b{color:var(--ink);font-weight:800}.daily-verdict b.ll{color:var(--left)}.daily-verdict b.rr{color:var(--right)}
+.daily-verdict.muted{color:var(--ink-faint)}
+.daily-actions{display:flex;gap:10px}
+.daily-cta{background:var(--accent);color:#15110a;border:0;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:800;cursor:pointer}
+.daily-cta:hover{filter:brightness(1.07)}
+.daily-share{background:transparent;color:var(--ink-dim);border:1px solid var(--line-2);border-radius:8px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer}
+.daily-share:hover{color:var(--ink);border-color:var(--ink-dim)}
+@media(min-width:760px){
+  .daily{grid-template-columns:1.15fr 1fr;align-items:stretch}
+  .daily-media{aspect-ratio:auto;height:100%;min-height:340px}
+  .daily-body{padding:26px 28px;display:flex;flex-direction:column;justify-content:center}
+  .daily-body h2{font-size:32px}
+}
+@media(max-width:600px){.daily-body h2{font-size:23px}.daily-split{grid-template-columns:1fr}.daily-split .ds span{-webkit-line-clamp:2}}
+
 /* mini split on fault tiles */
 .mini{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:1px}
 .mini > div{font-size:11px;line-height:1.4;color:var(--ink-dim);position:relative;padding-left:9px}

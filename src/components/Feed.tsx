@@ -147,6 +147,41 @@ function Tile({ s, onOpen, hero = false, saved = false, onToggleSave, onToast }:
   );
 }
 
+// Signature daily lead — the single most contested fresh debate, given a bold side-by-side treatment.
+function DailyHero({ s, onOpen, onToast }: { s: Story; onOpen: (s: Story) => void; onToast: (m: string) => void }) {
+  const [err, setErr] = useState(false);
+  const verdict = crowdVerdict(s);
+  return (
+    <section className="daily" onClick={() => onOpen(s)}>
+      <div className="daily-media">
+        {s.image_url && !err ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setErr(true)} />
+        ) : (
+          <div className="tile-fallback" data-topic={s.topic}><span className="tf-mark">Fault<i className="seam" />Lines</span></div>
+        )}
+        <span className="daily-flag">⚡ Today&apos;s Fault Line</span>
+      </div>
+      <div className="daily-body">
+        <h2>{s.neutral_title}</h2>
+        <div className="daily-split">
+          <div className="ds left"><b>The Left</b><span>{leftSpin(s)}</span></div>
+          <div className="ds right"><b>The Right</b><span>{rightSpin(s)}</span></div>
+        </div>
+        {verdict ? (
+          <div className="daily-verdict"><span className={`tv-dot ${verdict.side}`} /><b>{verdict.pct}%</b> side with the <b className={verdict.side === "left" ? "ll" : "rr"}>{verdict.side === "left" ? "Left" : "Right"}</b> so far</div>
+        ) : (
+          <div className="daily-verdict muted">Be the first to weigh in</div>
+        )}
+        <div className="daily-actions">
+          <button className="daily-cta" onClick={(e) => { e.stopPropagation(); onOpen(s); }}>Weigh in →</button>
+          <button className="daily-share" onClick={(e) => { e.stopPropagation(); quickShare(s, onToast); }}>↗ Share</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast: (m: string) => void }) {
   const [votes, setVotes] = useState(s.votes);
   const [imgErr, setImgErr] = useState(false);
@@ -331,6 +366,10 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
     return base2;
   }, [filtered, local, mode, topic, q]);
 
+  // The bold daily lead only on the default home view (Most Debated · All · no search) and only for a split.
+  const showDaily = mode === "faultlines" && topic === "all" && !q && list.length > 0 && list[0].has_split;
+  const gridList = showDaily ? list.slice(1) : list;
+
   return (
     <>
       <div className="subnav">
@@ -369,16 +408,17 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
       </div>
 
       <main>
-        {list.length ? (
+        {showDaily && <DailyHero s={list[0]} onOpen={openStory} onToast={showToast} />}
+        {gridList.length ? (
           <div className="grid">
-            {list.map((s, i) => (
+            {gridList.map((s, i) => (
               <Fragment key={s.id}>
-                <Tile s={s} onOpen={openStory} hero={i === 0} saved={saved.has(String(s.id))} onToggleSave={onToggleSave} onToast={showToast} />
-                {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
+                <Tile s={s} onOpen={openStory} hero={!showDaily && i === 0} saved={saved.has(String(s.id))} onToggleSave={onToggleSave} onToast={showToast} />
+                {i > 0 && (i + 1) % AD_EVERY === 0 && i < gridList.length - 1 && <AdSlot slot={AD_INFEED} />}
               </Fragment>
             ))}
           </div>
-        ) : (
+        ) : !showDaily ? (
           <div className="empty">
             {q
               ? `No stories match “${query}”.`
@@ -390,7 +430,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
                   ? "Local stories fill in as the newsroom runs — check the Seattle & SF editions."
                   : `No stories in ${LABEL[topic]} yet.`}
           </div>
-        )}
+        ) : null}
       </main>
 
       {open && <Modal s={open} onClose={closeModal} onToast={showToast} />}

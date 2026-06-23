@@ -7,6 +7,7 @@ import SignInWall from "@/components/SignInWall";
 import { canRead, recordRead } from "@/lib/gate";
 import { supabase } from "@/lib/supabase-browser";
 import { track } from "@/lib/track";
+import { savedIds, isSaved, toggleSave, onSavesChanged } from "@/lib/saves";
 
 const TOPICS = ["all", "top", "politics", "business", "tech", "world", "sports"] as const;
 const LABEL: Record<string, string> = { all: "All", top: "Top", politics: "Politics", business: "Business", tech: "Tech", world: "World", sports: "Sports" };
@@ -49,7 +50,20 @@ function LeanBar({ coverage, full = false }: { coverage: Coverage; full?: boolea
   );
 }
 
-function TileImage({ s, fl }: { s: Story; fl: boolean }) {
+function BookmarkBtn({ id, saved, onToggle }: { id: number; saved: boolean; onToggle: (id: number) => void }) {
+  return (
+    <button
+      className={`bookmark${saved ? " on" : ""}`}
+      aria-label={saved ? "Remove bookmark" : "Save story"}
+      aria-pressed={saved}
+      onClick={(e) => { e.stopPropagation(); onToggle(id); }}
+    >
+      {saved ? "★" : "☆"}
+    </button>
+  );
+}
+
+function TileImage({ s, fl, saved, onToggleSave }: { s: Story; fl: boolean; saved: boolean; onToggleSave: (id: number) => void }) {
   const [err, setErr] = useState(false);
   const showImg = s.image_url && !err;
   return (
@@ -68,15 +82,16 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
         {isBreaking(s) ? <span className="pill-breaking">● Breaking</span> : s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
         {fl && <span className="pill-split">Split</span>}
       </div>
+      <BookmarkBtn id={s.id} saved={saved} onToggle={onToggleSave} />
     </div>
   );
 }
 
-function Tile({ s, onOpen, hero = false }: { s: Story; onOpen: (s: Story) => void; hero?: boolean }) {
+function Tile({ s, onOpen, hero = false, saved = false, onToggleSave }: { s: Story; onOpen: (s: Story) => void; hero?: boolean; saved?: boolean; onToggleSave: (id: number) => void }) {
   const fl = s.has_split;
   return (
     <article className={`tile${hero ? " hero" : ""}`} onClick={() => onOpen(s)}>
-      <TileImage s={s} fl={fl} />
+      <TileImage s={s} fl={fl} saved={saved} onToggleSave={onToggleSave} />
       <div className="tile-body">
         <h3>{s.neutral_title}</h3>
         {fl ? (
@@ -207,12 +222,13 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
 }
 
 export default function Feed({ initial, local = [] }: { initial: Story[]; local?: Story[] }) {
-  const [mode, setMode] = useState<"faultlines" | "wire" | "local">("faultlines");
+  const [mode, setMode] = useState<"faultlines" | "wire" | "local" | "saved">("faultlines");
   const [topic, setTopic] = useState<string>("all");
   const [open, setOpen] = useState<Story | null>(null);
   const [wall, setWall] = useState(false);
   const [authed, setAuthed] = useState(true); // assume allowed until session checked (no flash for members)
   const [query, setQuery] = useState("");
+  const [saved, setSaved] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState("");
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1600); };
 
@@ -222,6 +238,13 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
     const { data: sub } = sb.auth.onAuthStateChange((_e, session) => setAuthed(!!session));
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const sync = () => setSaved(new Set(savedIds()));
+    sync();
+    return onSavesChanged(sync);
+  }, []);
+  const onToggleSave = (id: number) => { const now = toggleSave(id); track("save", String(now)); showToast(now ? "Saved" : "Removed"); };
 
   // Deep-link the open story (shareable URL). After 3 free reads, non-members hit the free sign-in wall.
   const openStory = (s: Story) => {
@@ -238,21 +261,27 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // Debate score: tension + how much the crowd is fighting about it → drives "Most Debated".
-  const debate = (s: Story) => (s.tension_score || 0) + (s.votes.left.up + s.votes.left.down + s.votes.right.up + s.votes.right.down) * 4;
+  // Debate score: tension + crowd engagement, decayed by age so the lead always feels current.
+  const debate = (s: Story) => {
+    const raw = (s.tension_score || 0) + (s.votes.left.up + s.votes.left.down + s.votes.right.up + s.votes.right.down) * 4;
+    const ageDays = ageMin(s.published_at) / 1440;
+    return raw * Math.pow(0.5, ageDays / 2.5); // halves every ~2.5 days
+  };
   const splits = useMemo(() => initial.filter((s) => s.has_split).sort((a, b) => debate(b) - debate(a)), [initial]);
   const wire = useMemo(() => initial.filter((s) => !s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
+  const allStories = useMemo(() => [...initial, ...local], [initial, local]);
+  const savedList = useMemo(() => allStories.filter((s) => saved.has(String(s.id))), [allStories, saved]);
 
   const q = query.trim().toLowerCase();
   // When searching, look across everything (all splits + wire + local), not just the active tab.
   const searchPool = useMemo(() => (q ? [...splits, ...wire, ...local] : []), [q, splits, wire, local]);
-  const base = q ? searchPool : mode === "local" ? local : mode === "faultlines" ? splits : wire;
+  const base = q ? searchPool : mode === "saved" ? savedList : mode === "local" ? local : mode === "faultlines" ? splits : wire;
   const searched = q ? base.filter((s) => `${s.neutral_title} ${s.neutral_body}`.toLowerCase().includes(q)) : base;
   const filtered = topic === "all" ? searched : searched.filter((s) => s.topic === topic);
   // Always mix a little local into the national views so the homepage is national + local.
   const list = useMemo(() => {
     let base2 = filtered;
-    if (!(q || mode === "local" || topic !== "all" || !local.length)) {
+    if (!(q || mode === "local" || mode === "saved" || topic !== "all" || !local.length)) {
       const out: Story[] = []; let li = 0;
       filtered.forEach((s, i) => {
         out.push(s);
@@ -284,6 +313,11 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
                 <span className="mt">📍 Local<span className="count">{local.length}</span></span>
               </button>
             )}
+            {saved.size > 0 && (
+              <button className="mode" aria-selected={mode === "saved"} onClick={() => setMode("saved")}>
+                <span className="mt">★ Saved<span className="count">{saved.size}</span></span>
+              </button>
+            )}
           </div>
           <div className="subnav-row">
             <nav className="topics" role="tablist">
@@ -305,7 +339,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
           <div className="grid">
             {list.map((s, i) => (
               <Fragment key={s.id}>
-                <Tile s={s} onOpen={openStory} hero={i === 0} />
+                <Tile s={s} onOpen={openStory} hero={i === 0} saved={saved.has(String(s.id))} onToggleSave={onToggleSave} />
                 {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
               </Fragment>
             ))}
@@ -314,6 +348,8 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
           <div className="empty">
             {q
               ? `No stories match “${query}”.`
+              : mode === "saved"
+              ? "No saved stories yet — tap the ★ on any story to keep it here."
               : mode === "faultlines"
                 ? (splits.length ? `No fault lines in ${LABEL[topic]} right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. See The Wire.")
                 : mode === "local"
@@ -335,6 +371,9 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
         </button>
         <button aria-selected={mode === "local"} onClick={() => { setMode("local"); window.scrollTo(0, 0); }}>
           <span className="bn-ic">◎</span>Local
+        </button>
+        <button aria-selected={mode === "saved"} onClick={() => { setMode("saved"); window.scrollTo(0, 0); }}>
+          <span className="bn-ic">★</span>Saved
         </button>
       </nav>
 

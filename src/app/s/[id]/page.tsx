@@ -1,4 +1,4 @@
-import { getStory } from "@/lib/stories";
+import { getStory, getStories } from "@/lib/stories";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ShareMenu from "@/components/ShareMenu";
@@ -26,6 +26,12 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const s = await getStory(id);
   if (!s) notFound();
+
+  // Related stories so a visitor who arrived from a shared link has somewhere to go next.
+  const all = await getStories().catch(() => []);
+  const pool = all.filter((x) => x.id !== s.id);
+  const sameTopic = pool.filter((x) => x.topic === s.topic);
+  const more = [...new Map([...sameTopic, ...pool.filter((x) => x.has_split), ...pool].map((x) => [x.id, x])).values()].slice(0, 6);
 
   const ld = {
     "@context": "https://schema.org",
@@ -76,6 +82,28 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
           {s.has_split && s.tension_score != null && <span>Divergence {s.tension_score}/100</span>}
           <ShareMenu title={s.neutral_title} path={`/s/${s.id}`} />
         </div>
+
+        {more.length > 0 && (
+          <section className="more-sec">
+            <h3 className="more-h">More fault lines</h3>
+            <div className="more-grid">
+              {more.map((m) => (
+                <a key={m.id} href={`/s/${m.id}`} className="more-card">
+                  <div className="more-media">
+                    {m.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.image_url} alt="" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="tile-fallback" data-topic={m.topic}><span className="tf-mark">Fault<i className="seam" />Lines</span></div>
+                    )}
+                    {m.has_split && <span className="more-split">Split</span>}
+                  </div>
+                  <div className="more-cbody"><span className="more-topic">{m.topic}</span><h4>{m.neutral_title}</h4></div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         <p style={{ marginTop: 26 }}><a href="/" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 700 }}>← Back to Fault Lines</a></p>
       </article>

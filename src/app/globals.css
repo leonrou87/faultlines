@@ -84,11 +84,19 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
 .tile-fallback[data-topic="local"]{background:linear-gradient(150deg,#1f3a40,#15262a)}
 .tile-fallback[data-topic="local"] .seam{background:#2f8f9d}
 .tile-badges{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;z-index:2}
-.bookmark{position:absolute;top:8px;right:8px;z-index:3;width:30px;height:30px;border-radius:50%;border:0;background:rgba(15,17,19,.62);backdrop-filter:blur(4px);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,transform .12s,background .15s}
-.tile:hover .bookmark,.bookmark.on{opacity:1}
-.bookmark:hover{background:rgba(15,17,19,.85);transform:scale(1.08)}
+.tile-actions{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:6px}
+.bookmark,.tile-share{width:30px;height:30px;border-radius:50%;border:0;background:rgba(15,17,19,.62);backdrop-filter:blur(4px);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,transform .12s,background .15s}
+.tile-share{font-size:16px;font-weight:700}
+.tile:hover .bookmark,.tile:hover .tile-share,.bookmark.on{opacity:1}
+.bookmark:hover,.tile-share:hover{background:rgba(15,17,19,.85);transform:scale(1.08)}
 .bookmark.on{color:var(--accent)}
-@media(hover:none){.bookmark{opacity:1}}
+@media(hover:none){.bookmark,.tile-share{opacity:1}}
+.tile-verdict{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);margin-top:2px}
+.tile-verdict b{color:var(--ink);font-weight:800}
+.tile-verdict b.ll{color:var(--left)}.tile-verdict b.rr{color:var(--right)}
+.tv-dot{width:7px;height:7px;border-radius:50%}
+.tv-dot.left{background:var(--left)}.tv-dot.right{background:var(--right)}
+.readprog{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--left),var(--accent),var(--right));z-index:120;transition:width .1s linear}
 .pill-topic,.pill-split{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:rgba(15,17,19,.82);backdrop-filter:blur(4px);color:#fff}
 .pill-split{background:none;border:1px solid rgba(255,255,255,.45)}
 .tile-body{display:flex;flex-direction:column;gap:9px}

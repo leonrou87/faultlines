@@ -63,7 +63,31 @@ function BookmarkBtn({ id, saved, onToggle }: { id: number; saved: boolean; onTo
   );
 }
 
-function TileImage({ s, fl, saved, onToggleSave }: { s: Story; fl: boolean; saved: boolean; onToggleSave: (id: number) => void }) {
+// One-tap share straight from the feed — uses the native share sheet on mobile, X intent + clipboard elsewhere.
+async function quickShare(s: Story, onToast: (m: string) => void) {
+  const url = `https://faultlines.kytepush.com/s/${s.id}`;
+  const text = s.has_split ? `${s.neutral_title} — whose side are you on?` : s.neutral_title;
+  track("share_tile", s.has_split ? "split" : "wire");
+  if (navigator.share) { try { await navigator.share({ title: s.neutral_title, text, url }); return; } catch { /* cancelled */ return; } }
+  try { await navigator.clipboard.writeText(`${text} ${url}`); onToast("Link copied"); }
+  catch { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener"); }
+}
+
+function ShareBtn({ s, onToast }: { s: Story; onToast: (m: string) => void }) {
+  return (
+    <button className="tile-share" aria-label="Share story" onClick={(e) => { e.stopPropagation(); quickShare(s, onToast); }}>↗</button>
+  );
+}
+
+// Reader-vote crowd verdict for the feed: who the crowd thinks frames it more fairly.
+function crowdVerdict(s: Story): { pct: number; side: "left" | "right" } | null {
+  const l = s.votes.left.up, r = s.votes.right.up, t = l + r;
+  if (t < 3) return null; // need a little signal before flexing a number
+  const lPct = Math.round((100 * l) / t);
+  return lPct >= 50 ? { pct: lPct, side: "left" } : { pct: 100 - lPct, side: "right" };
+}
+
+function TileImage({ s, fl, saved, onToggleSave, onToast }: { s: Story; fl: boolean; saved: boolean; onToggleSave: (id: number) => void; onToast: (m: string) => void }) {
   const [err, setErr] = useState(false);
   const showImg = s.image_url && !err;
   return (
@@ -82,16 +106,20 @@ function TileImage({ s, fl, saved, onToggleSave }: { s: Story; fl: boolean; save
         {isBreaking(s) ? <span className="pill-breaking">● Breaking</span> : s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
         {fl && <span className="pill-split">Split</span>}
       </div>
-      <BookmarkBtn id={s.id} saved={saved} onToggle={onToggleSave} />
+      <div className="tile-actions">
+        <ShareBtn s={s} onToast={onToast} />
+        <BookmarkBtn id={s.id} saved={saved} onToggle={onToggleSave} />
+      </div>
     </div>
   );
 }
 
-function Tile({ s, onOpen, hero = false, saved = false, onToggleSave }: { s: Story; onOpen: (s: Story) => void; hero?: boolean; saved?: boolean; onToggleSave: (id: number) => void }) {
+function Tile({ s, onOpen, hero = false, saved = false, onToggleSave, onToast }: { s: Story; onOpen: (s: Story) => void; hero?: boolean; saved?: boolean; onToggleSave: (id: number) => void; onToast: (m: string) => void }) {
   const fl = s.has_split;
+  const verdict = fl ? crowdVerdict(s) : null;
   return (
     <article className={`tile${hero ? " hero" : ""}`} onClick={() => onOpen(s)}>
-      <TileImage s={s} fl={fl} saved={saved} onToggleSave={onToggleSave} />
+      <TileImage s={s} fl={fl} saved={saved} onToggleSave={onToggleSave} onToast={onToast} />
       <div className="tile-body">
         <h3>{s.neutral_title}</h3>
         {fl ? (
@@ -100,6 +128,12 @@ function Tile({ s, onOpen, hero = false, saved = false, onToggleSave }: { s: Sto
               <div className="ml"><b>Left</b><span>{leftSpin(s)}</span></div>
               <div className="mr"><b>Right</b><span>{rightSpin(s)}</span></div>
             </div>
+            {verdict && (
+              <div className="tile-verdict">
+                <span className={`tv-dot ${verdict.side}`} />
+                <b>{verdict.pct}%</b> side with the <b className={verdict.side === "left" ? "ll" : "rr"}>{verdict.side === "left" ? "Left" : "Right"}</b>
+              </div>
+            )}
             <div className="tile-meta"><LeanBar coverage={s.coverage} />{s.published_at && <span className="tile-time">{timeAgo(s.published_at)}</span>}<span className="tile-cta">Read the split →</span></div>
           </>
         ) : (
@@ -339,7 +373,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
           <div className="grid">
             {list.map((s, i) => (
               <Fragment key={s.id}>
-                <Tile s={s} onOpen={openStory} hero={i === 0} saved={saved.has(String(s.id))} onToggleSave={onToggleSave} />
+                <Tile s={s} onOpen={openStory} hero={i === 0} saved={saved.has(String(s.id))} onToggleSave={onToggleSave} onToast={showToast} />
                 {i > 0 && (i + 1) % AD_EVERY === 0 && i < list.length - 1 && <AdSlot slot={AD_INFEED} />}
               </Fragment>
             ))}

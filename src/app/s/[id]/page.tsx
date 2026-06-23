@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ShareMenu from "@/components/ShareMenu";
 import LeanCoverage from "@/components/LeanCoverage";
+import ReadingProgress from "@/components/ReadingProgress";
 
 export const revalidate = 120;
 
@@ -42,6 +43,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
+      <ReadingProgress />
       <header className="app">
         <div className="topline" />
         <div className="bar"><a href="/" className="wordmark">Fault<span className="seam" />Lines</a></div>

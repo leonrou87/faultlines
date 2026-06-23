@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ShareMenu from "@/components/ShareMenu";
 import LeanCoverage from "@/components/LeanCoverage";
 import ReadingProgress from "@/components/ReadingProgress";
+import SplitVote from "@/components/SplitVote";
 
 export const revalidate = 120;
 
@@ -64,11 +65,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
 
         {s.has_split && (
           <>
-            <div className="vs-label">How each side frames it</div>
-            <div className="arena">
-              <div className="side left"><div className="who">The Left</div><div className="frame">{s.left_view}</div></div>
-              <div className="side right"><div className="who">The Right</div><div className="frame">{s.right_view}</div></div>
-            </div>
+            <SplitVote s={s} />
             {(s.agree_points.length > 0 || s.split_points.length > 0) && (
               <div className="cols">
                 <div className="col"><h6>What both sides accept</h6><ul>{s.agree_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>

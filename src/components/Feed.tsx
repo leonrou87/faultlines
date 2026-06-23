@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Story, Vote, Coverage } from "@/lib/stories";
 import AdSlot from "@/components/AdSlot";
 import ShareMenu from "@/components/ShareMenu";
@@ -200,13 +200,25 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
   const [votes, setVotes] = useState(s.votes);
   const [imgErr, setImgErr] = useState(false);
   const [myTake, setMyTake] = useState<null | "left" | "right">(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Esc closes; lock background scroll while the modal is open.
+  // Esc closes; lock background scroll; trap Tab focus inside the dialog; move focus in on open.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const root = overlayRef.current;
+    const focusables = () => Array.from(root?.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]:not([tabindex="-1"])') || []).filter((el) => el.offsetParent !== null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === "Tab") {
+        const f = focusables(); if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    focusables()[0]?.focus();
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [onClose]);
 
@@ -238,7 +250,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
       : "Readers are evenly split on fairness.";
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" ref={overlayRef} onClick={onClose}>
       <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
       <div className="modal" role="dialog" aria-modal="true" aria-label={s.neutral_title} onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}

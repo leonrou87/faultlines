@@ -77,6 +77,7 @@ export async function getStory(id: string | number): Promise<Story | null> {
     if (!s) return null;
     const votes = vRes.ok ? await vRes.json() : [];
     const vm = (side: string) => votes.find((v: { side: string }) => v.side === side) || { up: 0, down: 0 };
+    delete (s as Record<string, unknown>).sources; // never let the (now-null) sources field reach the client
     return {
       ...s,
       image_url: upgradeImage(s.image_url),
@@ -101,6 +102,7 @@ export async function getCityStories(city: string): Promise<Story[]> {
     const rows = await r.json();
     return rows.map((s: Record<string, unknown>) => ({
       ...s,
+      sources: undefined,
       image_url: upgradeImage(s.image_url as string | null),
       agree_points: asArray(s.agree_points),
       split_points: asArray(s.split_points),
@@ -133,6 +135,7 @@ export async function getStories(): Promise<Story[]> {
       const coverage = asCoverage(s.coverage);
       return {
         ...s,
+        sources: undefined,
         image_url: upgradeImage(s.image_url as string | null),
         agree_points: asArray(s.agree_points),
         split_points: asArray(s.split_points),

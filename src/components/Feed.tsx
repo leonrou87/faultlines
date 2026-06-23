@@ -118,7 +118,14 @@ function Tile({ s, onOpen, hero = false, saved = false, onToggleSave, onToast }:
   const fl = s.has_split;
   const verdict = fl ? crowdVerdict(s) : null;
   return (
-    <article className={`tile${hero ? " hero" : ""}`} onClick={() => onOpen(s)}>
+    <article
+      className={`tile${hero ? " hero" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-label={s.neutral_title}
+      onClick={() => onOpen(s)}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(s); } }}
+    >
       <TileImage s={s} fl={fl} saved={saved} onToggleSave={onToggleSave} onToast={onToast} />
       <div className="tile-body">
         <h3>{s.neutral_title}</h3>
@@ -152,7 +159,14 @@ function DailyHero({ s, onOpen, onToast }: { s: Story; onOpen: (s: Story) => voi
   const [err, setErr] = useState(false);
   const verdict = crowdVerdict(s);
   return (
-    <section className="daily" onClick={() => onOpen(s)}>
+    <section
+      className="daily"
+      role="button"
+      tabIndex={0}
+      aria-label={`Today's Fault Line: ${s.neutral_title}`}
+      onClick={() => onOpen(s)}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(s); } }}
+    >
       <div className="daily-media">
         {s.image_url && !err ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -187,6 +201,15 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
   const [imgErr, setImgErr] = useState(false);
   const [myTake, setMyTake] = useState<null | "left" | "right">(null);
 
+  // Esc closes; lock background scroll while the modal is open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
   function shareTake(how: "x" | "copy") {
     const url = `https://faultlines.kytepush.com/s/${s.id}`;
     const side = myTake === "left" ? "the Left" : "the Right";
@@ -217,7 +240,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
   return (
     <div className="overlay" onClick={onClose}>
       <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label={s.neutral_title} onClick={(e) => e.stopPropagation()}>
         {s.image_url && !imgErr && /* eslint-disable-next-line @next/next/no-img-element */ <img className="modal-img" src={s.image_url} alt="" referrerPolicy="no-referrer" onError={() => setImgErr(true)} />}
         <div className="modal-inner">
           <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}{s.has_split && (s.tension_score || 0) >= 60 && <span className="khot">🔥 Hotly contested</span>}</div>

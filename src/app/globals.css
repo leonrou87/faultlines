@@ -15,6 +15,8 @@
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
 body{font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.55;padding-bottom:env(safe-area-inset-bottom)}
 a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tile:focus-visible,.daily:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 @media(max-width:600px){.wrap{padding:0 16px}}
 
@@ -355,7 +357,10 @@ main{max-width:var(--maxw);margin:0 auto;padding:24px 24px 96px}
 .poll-fill{position:absolute;left:0;top:0;bottom:0;background:rgba(184,146,63,.22);transition:width .5s cubic-bezier(.22,.61,.36,1)}
 .poll-label{position:relative;z-index:1}
 .poll-pct{position:relative;z-index:1;margin-left:auto;font-weight:800;font-size:13px;color:var(--accent)}
-.poll-total{font-size:11px;color:var(--ink-faint);margin-top:10px;letter-spacing:.3px}
+.poll-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px}
+.poll-total{font-size:11px;color:var(--ink-faint);letter-spacing:.3px}
+.poll-share{background:none;border:1px solid var(--line-2);color:var(--ink-dim);border-radius:6px;padding:5px 11px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.poll-share:hover{color:var(--ink);border-color:var(--accent)}
 .qbox{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:24px 0}
 .qbox h3{margin:0 0 10px;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
 .qbox ul{margin:0;padding-left:18px}

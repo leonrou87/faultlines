@@ -18,6 +18,16 @@ export default function PollWidget({ poll }: { poll: Poll }) {
     } catch { /* keep optimistic */ }
   }
 
+  async function shareResult() {
+    const top = votes.indexOf(Math.max(...votes));
+    const pct = total ? Math.round((100 * votes[top]) / total) : 0;
+    const text = `${pct}% say "${poll.options[top]}" — ${poll.question} What do you think?`;
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    track("poll_share", String(poll.id));
+    if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ text, url }); return; } catch { return; } }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* noop */ }
+  }
+
   return (
     <div className="poll">
       <div className="poll-q">{poll.question}</div>
@@ -33,7 +43,10 @@ export default function PollWidget({ poll }: { poll: Poll }) {
           );
         })}
       </div>
-      <div className="poll-total">{voted ? `${total} vote${total === 1 ? "" : "s"}` : "Tap to vote — see how the city leans"}</div>
+      <div className="poll-foot">
+        <span className="poll-total">{voted ? `${total} vote${total === 1 ? "" : "s"}` : "Tap to vote — see how the city leans"}</span>
+        {voted && <button className="poll-share" onClick={shareResult}>↗ Share result</button>}
+      </div>
     </div>
   );
 }

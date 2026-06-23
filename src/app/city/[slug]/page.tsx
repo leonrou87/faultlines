@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import EditionsMenu from "@/components/EditionsMenu";
 import AuthButton from "@/components/AuthButton";
+import StreakBadge from "@/components/StreakBadge";
 
 export const revalidate = 120;
 
@@ -28,6 +29,7 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
           <div className="mast-actions">
             {weather && <span className="wx">{weather.icon} {weather.temp}° <span className="wx-l">{weather.label}</span></span>}
+            <StreakBadge />
             <EditionsMenu current={slug} />
             <AuthButton />
           </div>

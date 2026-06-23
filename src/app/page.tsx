@@ -5,6 +5,7 @@ import Feed from "@/components/Feed";
 import Dateline from "@/components/Dateline";
 import EditionsMenu from "@/components/EditionsMenu";
 import AuthButton from "@/components/AuthButton";
+import StreakBadge from "@/components/StreakBadge";
 
 // Map a Vercel-detected city name to one of our editions.
 const GEO: Record<string, string> = {
@@ -36,6 +37,7 @@ export default async function Home() {
         <div className="bar">
           <a href="/" className="wordmark">Fault<span className="seam" />Lines</a>
           <div className="mast-actions">
+            <StreakBadge />
             <Dateline />
             <EditionsMenu current="national" />
             <AuthButton />

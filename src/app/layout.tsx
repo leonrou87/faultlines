@@ -24,7 +24,11 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Fault Lines" },
   openGraph: { title: "Fault Lines", description: DESC, url: SITE, siteName: "Fault Lines", type: "website" },
   twitter: { card: "summary_large_image", title: "Fault Lines", description: DESC },
+  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/apple-touch-icon.png" },
 };
+
+// Warm up the connections we hit on first paint (data + ads) to shave latency.
+const SB_ORIGIN = (() => { try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").origin; } catch { return ""; } })();
 
 export const viewport: Viewport = {
   themeColor: "#0f1113", width: "device-width", initialScale: 1, viewportFit: "cover", maximumScale: 1,
@@ -33,6 +37,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${display.variable} ${serif.variable} ${sans.variable}`}>
+      <head>
+        {SB_ORIGIN && <link rel="preconnect" href={SB_ORIGIN} crossOrigin="anonymous" />}
+        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+        <link rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
+        <link rel="dns-prefetch" href="https://kytepush.com" />
+      </head>
       <body>
         {children}
         <Onboarding />

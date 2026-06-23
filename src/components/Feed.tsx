@@ -18,6 +18,19 @@ const firstSentence = (t: string | null) => (t || "").split(/(?<=[.!?])\s/)[0] |
 const leftSpin = (s: Story) => s.left_summary || firstSentence(s.left_view);
 const rightSpin = (s: Story) => s.right_summary || firstSentence(s.right_view);
 
+const ageMin = (iso: string | null) => (iso ? (Date.now() - Date.parse(iso)) / 60000 : Infinity);
+function timeAgo(iso: string | null): string {
+  const m = ageMin(iso);
+  if (!isFinite(m)) return "";
+  if (m < 1) return "just now";
+  if (m < 60) return `${Math.round(m)}m ago`;
+  const h = m / 60;
+  if (h < 24) return `${Math.round(h)}h ago`;
+  const d = h / 24;
+  return d < 7 ? `${Math.round(d)}d ago` : `${Math.round(d / 7)}w ago`;
+}
+const isBreaking = (s: Story) => ageMin(s.published_at) < 90 && s.trending >= 50;
+
 // Coverage-by-lean bar (the signal a bias product should lead with). Anonymized — shows how the
 // political spectrum is covering a story, never which outlets.
 function LeanBar({ coverage, full = false }: { coverage: Coverage; full?: boolean }) {
@@ -52,7 +65,7 @@ function TileImage({ s, fl }: { s: Story; fl: boolean }) {
         </div>
       )}
       <div className="tile-badges">
-        {s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
+        {isBreaking(s) ? <span className="pill-breaking">● Breaking</span> : s._cityName ? <span className="pill-local">📍 {s._cityName}</span> : <span className="pill-topic">{s.topic}</span>}
         {fl && <span className="pill-split">Split</span>}
       </div>
     </div>
@@ -72,12 +85,12 @@ function Tile({ s, onOpen, hero = false }: { s: Story; onOpen: (s: Story) => voi
               <div className="ml"><b>Left</b><span>{leftSpin(s)}</span></div>
               <div className="mr"><b>Right</b><span>{rightSpin(s)}</span></div>
             </div>
-            <div className="tile-meta"><LeanBar coverage={s.coverage} /><span>Across the spectrum</span><span className="tile-cta">Read the split</span></div>
+            <div className="tile-meta"><LeanBar coverage={s.coverage} />{s.published_at && <span className="tile-time">{timeAgo(s.published_at)}</span>}<span className="tile-cta">Read the split →</span></div>
           </>
         ) : (
           <>
             <p className="tile-teaser">{s.neutral_body.slice(0, 150)}{s.neutral_body.length > 150 ? "…" : ""}</p>
-            <div className="tile-meta"><LeanBar coverage={s.coverage} />{s.trending >= 55 ? <span>Trending</span> : <span>Across the spectrum</span>}</div>
+            <div className="tile-meta"><LeanBar coverage={s.coverage} />{s.published_at && <span className="tile-time">{timeAgo(s.published_at)}</span>}{s.trending >= 55 && <span className="tile-hot">🔥 Trending</span>}</div>
           </>
         )}
       </div>
@@ -88,6 +101,16 @@ function Tile({ s, onOpen, hero = false }: { s: Story; onOpen: (s: Story) => voi
 function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast: (m: string) => void }) {
   const [votes, setVotes] = useState(s.votes);
   const [imgErr, setImgErr] = useState(false);
+  const [myTake, setMyTake] = useState<null | "left" | "right">(null);
+
+  function shareTake(how: "x" | "copy") {
+    const url = `https://faultlines.kytepush.com/s/${s.id}`;
+    const side = myTake === "left" ? "the Left" : "the Right";
+    const text = `I think ${side}'s framing is fairer on "${s.neutral_title}". Whose side are you on?`;
+    track("share_take", `${myTake}:${how}`);
+    if (how === "x") { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener"); return; }
+    navigator.clipboard?.writeText(`${text} ${url}`).then(() => onToast("Link copied — go spark the debate")).catch(() => onToast("Could not copy"));
+  }
   const la = approval(votes.left), ra = approval(votes.right);
   const lFair = votes.left.up, rFair = votes.right.up, fairTotal = lFair + rFair;
   const lPct = fairTotal ? Math.round((100 * lFair) / fairTotal) : 50, rPct = 100 - lPct;
@@ -97,7 +120,7 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
     try {
       const r = await fetch("/api/vote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ story_id: s.id, side, dir }) });
       const v = await r.json();
-      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Rating recorded"); track("vote", `${side}:${dir}`); }
+      if (v && typeof v.up === "number") { setVotes((p) => ({ ...p, [side]: { up: v.up, down: v.down } })); onToast("Rating recorded"); track("vote", `${side}:${dir}`); if (dir === "up") setMyTake(side); }
       else onToast("Could not record rating");
     } catch { onToast("Could not record rating"); }
   }
@@ -153,6 +176,16 @@ function Modal({ s, onClose, onToast }: { s: Story; onClose: () => void; onToast
                 <div className="verdict">{verdict}</div>
               </div>
 
+              {myTake && (
+                <div className="take-share">
+                  <div className="ts-msg">You side with the <b className={myTake === "left" ? "ll" : "rr"}>{myTake === "left" ? "Left" : "Right"}</b> framing. Now make your friends pick.</div>
+                  <div className="ts-actions">
+                    <button className="ts-x" onClick={() => shareTake("x")}>Share on X</button>
+                    <button className="ts-copy" onClick={() => shareTake("copy")}>Copy link</button>
+                  </div>
+                </div>
+              )}
+
               {(s.agree_points.length > 0 || s.split_points.length > 0) && (
                 <div className="cols">
                   <div className="col"><h6>What both sides accept</h6><ul>{s.agree_points.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
@@ -179,6 +212,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
   const [open, setOpen] = useState<Story | null>(null);
   const [wall, setWall] = useState(false);
   const [authed, setAuthed] = useState(true); // assume allowed until session checked (no flash for members)
+  const [query, setQuery] = useState("");
   const [toast, setToast] = useState("");
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1600); };
 
@@ -209,12 +243,16 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
   const splits = useMemo(() => initial.filter((s) => s.has_split).sort((a, b) => debate(b) - debate(a)), [initial]);
   const wire = useMemo(() => initial.filter((s) => !s.has_split).sort((a, b) => b.trending - a.trending), [initial]);
 
-  const base = mode === "local" ? local : mode === "faultlines" ? splits : wire;
-  const filtered = topic === "all" ? base : base.filter((s) => s.topic === topic);
+  const q = query.trim().toLowerCase();
+  // When searching, look across everything (all splits + wire + local), not just the active tab.
+  const searchPool = useMemo(() => (q ? [...splits, ...wire, ...local] : []), [q, splits, wire, local]);
+  const base = q ? searchPool : mode === "local" ? local : mode === "faultlines" ? splits : wire;
+  const searched = q ? base.filter((s) => `${s.neutral_title} ${s.neutral_body}`.toLowerCase().includes(q)) : base;
+  const filtered = topic === "all" ? searched : searched.filter((s) => s.topic === topic);
   // Always mix a little local into the national views so the homepage is national + local.
   const list = useMemo(() => {
     let base2 = filtered;
-    if (!(mode === "local" || topic !== "all" || !local.length)) {
+    if (!(q || mode === "local" || topic !== "all" || !local.length)) {
       const out: Story[] = []; let li = 0;
       filtered.forEach((s, i) => {
         out.push(s);
@@ -228,7 +266,7 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
       if (hi > 0) base2 = [base2[hi], ...base2.slice(0, hi), ...base2.slice(hi + 1)];
     }
     return base2;
-  }, [filtered, local, mode, topic]);
+  }, [filtered, local, mode, topic, q]);
 
   return (
     <>
@@ -247,11 +285,18 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
               </button>
             )}
           </div>
-          <nav className="topics" role="tablist">
-            {TOPICS.map((t) => (
-              <button key={t} className="topic-pill" role="tab" aria-selected={t === topic} onClick={() => setTopic(t)}>{LABEL[t]}</button>
-            ))}
-          </nav>
+          <div className="subnav-row">
+            <nav className="topics" role="tablist">
+              {TOPICS.map((t) => (
+                <button key={t} className="topic-pill" role="tab" aria-selected={t === topic} onClick={() => setTopic(t)}>{LABEL[t]}</button>
+              ))}
+            </nav>
+            <div className="searchwrap">
+              <span className="search-ic" aria-hidden>⌕</span>
+              <input className="search-input" type="search" placeholder="Search stories" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search stories" />
+              {query && <button className="search-clear" onClick={() => setQuery("")} aria-label="Clear search">✕</button>}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -267,11 +312,13 @@ export default function Feed({ initial, local = [] }: { initial: Story[]; local?
           </div>
         ) : (
           <div className="empty">
-            {mode === "faultlines"
-              ? (splits.length ? `No fault lines in ${LABEL[topic]} right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. See The Wire.")
-              : mode === "local"
-                ? "Local stories fill in as the newsroom runs — check the Seattle & SF editions."
-                : `No stories in ${LABEL[topic]} yet.`}
+            {q
+              ? `No stories match “${query}”.`
+              : mode === "faultlines"
+                ? (splits.length ? `No fault lines in ${LABEL[topic]} right now.` : "No earned splits at the moment — we only show a split when left and right genuinely diverge. See The Wire.")
+                : mode === "local"
+                  ? "Local stories fill in as the newsroom runs — check the Seattle & SF editions."
+                  : `No stories in ${LABEL[topic]} yet.`}
           </div>
         )}
       </main>

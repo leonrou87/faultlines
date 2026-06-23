@@ -47,7 +47,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
         <div className="bar"><a href="/" className="wordmark">Fault<span className="seam" />Lines</a></div>
       </header>
       <article className="modal-inner" style={{ maxWidth: 680, margin: "0 auto", padding: "26px 20px 90px" }}>
-        <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}</div>
+        <div className="kicker">{s.topic}{s.has_split && <span className="ksplit">Split</span>}{s.published_at && <span className="muted">{new Date(s.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}</div>
         <h2 style={{ fontFamily: "var(--display)", fontWeight: 900, fontSize: 32, lineHeight: 1.1, margin: "0 0 14px", letterSpacing: "-.5px" }}>{s.neutral_title}</h2>
         {s.image_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={s.image_url} alt="" referrerPolicy="no-referrer" style={{ width: "100%", borderRadius: 8, marginBottom: 16, aspectRatio: "16/9", objectFit: "cover" }} />}
         <p className="lede" style={{ whiteSpace: "pre-line" }}>{s.neutral_body}</p>

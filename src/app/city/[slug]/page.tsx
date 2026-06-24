@@ -12,7 +12,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const c = CITIES[slug];
   if (!c) return { title: "City not found" };
-  return { title: `${c.name} — Fault Lines`, description: `Local ${c.name} news, issues, weather and what to do — summarized neutrally.` };
+  const desc = `Local ${c.name} news, the issues dividing the city, weather and what to do — summarized neutrally, with how the left and right each frame it.`;
+  return {
+    title: `${c.name} Edition`, // template appends " · Fault Lines" → no redundant doubling
+    description: desc,
+    openGraph: { title: `${c.name} — Fault Lines`, description: desc, type: "website" },
+    twitter: { card: "summary_large_image", title: `${c.name} — Fault Lines`, description: desc },
+  };
 }
 
 export default async function CityPage({ params }: { params: Promise<{ slug: string }> }) {
